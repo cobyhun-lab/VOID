@@ -77,12 +77,13 @@ canvas{display:block;position:fixed;top:0;left:0;}
 .sh-title{font-size:11px;letter-spacing:4px;color:rgba(255,255,255,.35);margin-bottom:4px;}
 .sh-wave{font-size:22px;letter-spacing:4px;color:#4af0c4;text-shadow:0 0 20px rgba(74,240,196,.4);}
 .sh-scrap{font-size:16px;color:#a8ff78;margin-top:4px;letter-spacing:2px;}
-.shop-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px;padding:0;width:100%;max-width:640px;}
-.shop-card{border:1px solid rgba(255,255,255,.13);border-radius:4px;padding:10px;cursor:pointer;transition:all .15s;background:rgba(255,255,255,.02);position:relative;user-select:none;}
-.sc-icon{font-size:22px;margin-bottom:4px;}
-.sc-name{font-size:11px;color:#fff;margin-bottom:2px;line-height:1.3;}
-.sc-cost{font-size:11px;color:#a8ff78;margin-bottom:3px;letter-spacing:1px;}
-.sc-desc{font-size:10px;color:rgba(255,255,255,.4);line-height:1.4;}
+.shop-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:0;width:100%;max-width:640px;}
+.shop-card{border:1px solid rgba(255,255,255,.13);border-radius:4px;padding:10px 10px 12px;cursor:pointer;transition:all .15s;background:rgba(255,255,255,.02);position:relative;user-select:none;display:flex;flex-direction:column;gap:3px;}
+.sc-icon{font-size:20px;}
+.sc-name{font-size:11px;color:#fff;line-height:1.3;padding-right:36px;}
+.sc-cost{font-size:11px;color:#a8ff78;letter-spacing:1px;}
+.sc-desc{font-size:9px;color:rgba(255,255,255,.45);line-height:1.5;margin-top:2px;}
+.sc-stat{font-size:9px;color:#4af0c4;margin-top:1px;letter-spacing:.5px;}
 .shop-card:active,.shop-card.hover{border-color:#4af0c4;background:rgba(74,240,196,.05);box-shadow:0 0 14px rgba(74,240,196,.12);}
 .shop-card.cant-afford{opacity:.45;cursor:default;}
 .sc-rarity{position:absolute;top:6px;right:6px;font-size:9px;letter-spacing:1px;}
@@ -105,6 +106,27 @@ canvas{display:block;position:fixed;top:0;left:0;}
 .go-icon{font-size:56px;}
 .go-title{font-size:clamp(20px,5vw,30px);letter-spacing:6px;color:#f05a4a;text-shadow:0 0 30px rgba(240,90,74,.5);}
 .go-stats{font-size:11px;letter-spacing:2px;color:rgba(255,255,255,.4);line-height:2.4;text-align:center;}
+/* Save UI */
+.save-bar{display:flex;gap:8px;align-items:center;justify-content:center;flex-wrap:wrap;}
+.callsign-row{display:flex;align-items:center;gap:10px;justify-content:center;}
+#callsign-input::placeholder{color:rgba(74,240,196,.25);}
+.lb-row{display:flex;align-items:center;gap:8px;padding:6px 12px;border-radius:3px;margin:2px 0;width:100%;max-width:500px;box-sizing:border-box;}
+.lb-row.lb-me{background:rgba(74,240,196,.08);border:1px solid rgba(74,240,196,.25);}
+.lb-row.lb-top{background:rgba(240,196,74,.06);}
+.lb-rank{font-size:16px;width:28px;text-align:center;flex-shrink:0;}
+.lb-name{flex:1;color:#fff;letter-spacing:2px;font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.lb-score{color:#a8ff78;font-size:11px;letter-spacing:1px;flex-shrink:0;}
+.lb-detail{color:rgba(255,255,255,.3);font-size:9px;letter-spacing:1px;flex-shrink:0;}
+.btn-sm{font-family:'Share Tech Mono',monospace;font-size:11px;letter-spacing:2px;padding:8px 18px;border:1px solid rgba(74,240,196,.5);background:transparent;color:rgba(74,240,196,.7);cursor:pointer;border-radius:2px;transition:all .15s;}
+.btn-sm:active,.btn-sm:hover{background:rgba(74,240,196,.1);}
+.btn-sm.danger{border-color:rgba(240,90,74,.5);color:rgba(240,90,74,.7);}
+.btn-sm.danger:active{background:rgba(240,90,74,.1);}
+#save-toast{position:fixed;bottom:100px;left:50%;transform:translateX(-50%);background:rgba(10,20,30,.95);border:1px solid #4af0c4;color:#4af0c4;font-family:'Share Tech Mono',monospace;font-size:11px;letter-spacing:2px;padding:10px 22px;border-radius:3px;pointer-events:none;z-index:999;opacity:0;transition:opacity .25s;}
+#save-toast.show{opacity:1;}
+.hiscore-box{font-size:10px;color:rgba(255,255,255,.3);letter-spacing:1px;text-align:center;line-height:2;}
+.hiscore-box span{color:#f0c44a;}
+.unlock-pip{display:inline-block;width:8px;height:8px;border-radius:50%;background:#4af0c4;box-shadow:0 0 6px #4af0c4;margin:0 2px;}
+.unlock-pip.locked{background:rgba(255,255,255,.15);box-shadow:none;}
 </style>
 </head>
 <body>
@@ -153,8 +175,20 @@ canvas{display:block;position:fixed;top:0;left:0;}
 <div class="screen active" id="screen-title">
   <div class="title-glow">VOID RUNNER</div>
   <div class="title-sub">A LONG TIME AGO, IN A GALAXY UNDER SIEGE...</div>
-  <div style="height:4px;"></div>
-  <button class="btn" onclick="startGame()">[ MAKE THE JUMP TO HYPERSPACE ]</button>
+  <div style="height:8px;"></div>
+  <div class="callsign-row">
+    <span style="font-size:10px;letter-spacing:2px;color:rgba(255,255,255,.35);">CALLSIGN:</span>
+    <input id="callsign-input" maxlength="16" placeholder="ENTER CALLSIGN" autocomplete="off" spellcheck="false"
+      style="background:transparent;border:none;border-bottom:1px solid rgba(74,240,196,.4);color:#4af0c4;font-family:inherit;font-size:13px;letter-spacing:3px;width:160px;outline:none;text-transform:uppercase;text-align:center;padding:4px 0;" />
+  </div>
+  <div style="height:6px;"></div>
+  <div class="save-bar">
+    <button class="btn" onclick="startGame()">[ MAKE THE JUMP TO HYPERSPACE ]</button>
+    <button class="btn" id="btn-resume" style="display:none;" onclick="resumeGame()">[ RESUME RUN ]</button>
+  </div>
+  <div style="height:6px;"></div>
+  <button class="btn-sm" onclick="showScreen('leaderboard');fetchLeaderboard();">🏆 GALACTIC LEADERBOARD</button>
+  <div class="hiscore-box" id="hiscore-display"></div>
   <div class="hint">WASD / ARROWS — Move &nbsp;|&nbsp; MOUSE — Aim &amp; fire<br>SHIFT / SPACE — Evasive Maneuver &nbsp;|&nbsp; Auto-fire on<br><br>📱 Left stick — Move &nbsp;|&nbsp; Right stick — Aim<br><br>Created by Coby</div>
 </div>
 
@@ -170,16 +204,37 @@ canvas{display:block;position:fixed;top:0;left:0;}
     <div class="shop-grid" id="shopGrid"></div>
   </div>
   <div id="shop-footer">
-    <button class="btn" onclick="leaveShop()" style="width:100%;max-width:400px;">[ JUMP TO NEXT SECTOR ]</button>
+    <div style="display:flex;gap:8px;width:100%;max-width:400px;flex-direction:column;align-items:stretch;">
+      <button class="btn" onclick="leaveShop()" style="width:100%;">[ JUMP TO NEXT SECTOR ]</button>
+      <button class="btn-sm" onclick="saveGame(true)">💾 SAVE RUN</button>
+    </div>
   </div>
 </div>
+
+<div id="save-toast">RUN SAVED — GODSPEED, PILOT</div>
 
 <!-- GAME OVER -->
 <div class="screen sc-bg" id="screen-gameover">
   <div class="go-icon">💀</div>
   <div class="go-title">THE SHIP HAS JUMPED INTO DANGER</div>
   <div class="go-stats" id="goStats"></div>
-  <button class="btn" onclick="startGame()">[ EXECUTE ORDER 66 — TRY AGAIN ]</button>
+  <div class="hiscore-box" id="go-hiscore"></div>
+  <div id="go-rank-msg" style="font-size:11px;letter-spacing:2px;color:#f0c44a;margin:6px 0;min-height:18px;"></div>
+  <div class="save-bar" style="flex-direction:column;align-items:center;gap:8px;">
+    <button class="btn" onclick="startGame()">[ EXECUTE ORDER 66 — TRY AGAIN ]</button>
+    <button class="btn-sm" onclick="showScreen('leaderboard');fetchLeaderboard();">🏆 VIEW LEADERBOARD</button>
+  </div>
+</div>
+
+<!-- LEADERBOARD SCREEN -->
+<div class="screen sc-bg" id="screen-leaderboard" style="overflow-y:auto;">
+  <div style="font-size:11px;letter-spacing:4px;color:rgba(255,255,255,.3);margin-bottom:4px;">GALACTIC COMMAND</div>
+  <div style="font-size:clamp(18px,5vw,28px);letter-spacing:6px;color:#f0c44a;text-shadow:0 0 30px rgba(240,196,74,.5);margin-bottom:16px;">🏆 LEADERBOARD</div>
+  <div id="lb-content" style="width:100%;max-width:500px;min-height:120px;font-size:11px;letter-spacing:2px;color:rgba(255,255,255,.5);text-align:center;line-height:2.4;">
+    <div style="color:rgba(255,255,255,.25);">SCANNING THE GALAXY...</div>
+  </div>
+  <div style="height:16px;"></div>
+  <button class="btn-sm" onclick="showScreen('title');initSaveUI();">← BACK TO BASE</button>
 </div>
 
 <script>
@@ -279,39 +334,37 @@ const WPN_UPGRADES = {
 
 // Shop items (cost scrap)
 const SHOP_ITEMS = [
-  // Weapons — all in pool, filtered per build
-  {id:'sw_l2',  name:'TWIN ION CANNONS',    icon:'⚔️', cost:30, rarity:'rare',      cat:'wpn', wpnId:'l2',  desc:'These aren\'t the droids you\'re looking for', builds:['l1','rp']},
-  {id:'sw_l3',  name:'QUAD TURBOLASER',     icon:'⚔️', cost:50, rarity:'epic',      cat:'wpn', wpnId:'l3',  desc:'Use the Force... and four barrels',   builds:['l1','l2','rp']},
-  {id:'sw_pl',  name:'CYLON PULSAR',        icon:'🔴', cost:50, rarity:'epic',      cat:'wpn', wpnId:'pl',  desc:'By your command, fire!'},
-  {id:'sw_pl2', name:'PHOTON TORPEDO',      icon:'🟠', cost:75, rarity:'epic',      cat:'wpn', wpnId:'pl2', desc:'To boldly blow up what no one has blown up before', builds:['pl','vr','orb']},
-  {id:'sw_sc',  name:'MANDALORIAN SCATTER', icon:'💠', cost:35, rarity:'rare',      cat:'wpn', wpnId:'sc',  desc:'I can bring you in warm, or I can bring you in cold'},
-  {id:'sw_sc2', name:'GROGU\'S WRATH',     icon:'💠', cost:55, rarity:'epic',      cat:'wpn', wpnId:'sc2', desc:'This is the Way... of maximum spread',     builds:['sc','tri','hex']},
-  {id:'sw_vr',  name:'DEATH STAR BEAM',     icon:'🟣', cost:90, rarity:'legendary', cat:'wpn', wpnId:'vr',  desc:'That\'s no moon — that\'s a weapon'},
-  {id:'sw_tri', name:'COLONIAL VIPER GUNS', icon:'🌟', cost:55, rarity:'epic',      cat:'wpn', wpnId:'tri', desc:'So say we all, fire everything!'},
-  {id:'sw_hex', name:'42-WAY IMPROBABILITY',icon:'🌟', cost:75, rarity:'epic',      cat:'wpn', wpnId:'hex', desc:'The answer is 42 projectiles',      builds:['sc','tri','sc2']},
-  {id:'sw_rp',  name:'STORMTROOPER SPECIAL',icon:'🩷', cost:40, rarity:'rare',      cat:'wpn', wpnId:'rp',  desc:'Stormtroopers: aim bad, fire rate good'},
-  {id:'sw_rp2', name:'INFINITE IMPROBABILITY',icon:'🩷', cost:65, rarity:'epic',      cat:'wpn', wpnId:'rp2', desc:'At this rate, entropy wins anyway', builds:['rp','l1','l2']},
-  {id:'sw_snp', name:'GAUSS REPEATER',      icon:'🩵', cost:80, rarity:'legendary', cat:'wpn', wpnId:'snp', desc:'Make it so. Right through them.'},
-  {id:'sw_snp2',name:'HAMMER OF THOR',      icon:'🩵', cost:110,rarity:'legendary', cat:'wpn', wpnId:'snp2',desc:'Worthy of the son of Odin',  builds:['snp','vr']},
-  {id:'sw_hm',  name:'PROTON TORPEDO',      icon:'🟡', cost:60, rarity:'epic',      cat:'wpn', wpnId:'hm',  desc:'Lock S-foils in attack position'},
-  {id:'sw_hm2', name:'CYLON RAIDER SWARM',  icon:'🟠', cost:80, rarity:'epic',      cat:'wpn', wpnId:'hm2', desc:'There are many copies — seek them', builds:['hm','bm']},
-  {id:'sw_bm',  name:'RICOCHETING TRIBBLE', icon:'🟢', cost:65, rarity:'epic',      cat:'wpn', wpnId:'bm',  desc:'Highly illogical... but effective',  builds:['hm','sc']},
-  {id:'sw_orb', name:'SPICE HARVESTER SHOT',icon:'🩷', cost:70, rarity:'epic',      cat:'wpn', wpnId:'orb', desc:'He who controls the spice, controls the firepower',    builds:['pl','vr']},
-  // Modules
-  {id:'m_rep',  name:'BACTA TANK PATCH',    icon:'🔧', cost:20, rarity:'common', cat:'mod', hullRepair:50,  desc:'Hull breach sealed. You\'re welcome.',    apply:g=>{g.p.hp=Math.min(g.p.maxHp,g.p.hp+50);}},
-  {id:'m_rep2', name:'FULL BACTA IMMERSION',   icon:'❤️', cost:45, rarity:'rare',   cat:'mod', hullRepair:'full', desc:'I\'m giving her all she\'s got, Captain!',     apply:g=>{g.p.hp=g.p.maxHp;}},
-  {id:'m_sh1',  name:'DEFLECTOR ARRAY',  icon:'🔵', cost:25, rarity:'common', cat:'mod', desc:'May the shield be with you.',            apply:g=>{g.p.maxSh+=50;g.p.sh=Math.min(g.p.sh+50,g.p.maxSh);}},
-  {id:'m_hull', name:'BESKAR PLATING',  icon:'🛡️', cost:30, rarity:'common', cat:'mod', desc:'This is not the armor you\'re looking for.',             apply:g=>{g.p.maxHp+=60;g.p.hp=Math.min(g.p.hp+30,g.p.maxHp);}},
-  {id:'m_spd',  name:'KESSEL RUN THRUSTERS',  icon:'💨', cost:35, rarity:'rare',   cat:'mod', desc:'Never tell me the odds — just go faster.',           apply:g=>{g.p.spd*=1.25;}},
-  {id:'m_fr',   name:'KOOLER UNIT',   icon:'❄️', cost:40, rarity:'rare',   cat:'mod', desc:'Lando would approve this modification.',            apply:g=>{g.p.wpn.fr*=0.8;}},
-  {id:'m_dmg',  name:'KYBER CRYSTAL CELL',    icon:'⚡', cost:50, rarity:'epic',   cat:'mod', desc:'Power from the kyber crystal surges.',           apply:g=>{g.p.dmgMult*=1.2;}},
-  {id:'m_dmg2', name:'SITH OVERCHARGE',    icon:'🔥', cost:80, rarity:'epic',   cat:'mod', desc:'Dark side power — spectacular, dangerous.',    apply:g=>{g.p.dmgMult*=1.4;}},
-  {id:'m_dash', name:'WARP FIELD COILS',  icon:'🌀', cost:30, rarity:'rare',   cat:'mod', desc:'Engage! Warp nine, Mr. Crusher.',        apply:g=>{g.p.dashMax*=0.65;}},
-  {id:'m_regen',name:'MIDICHLORIAN INJECTORS',     icon:'🤖', cost:45, rarity:'rare',   cat:'mod', desc:'Midi-chlorians doing their thing.',         apply:g=>{g.p.hpRegen+=3;}},
-  {id:'m_pierce',name:'LIGHTSABER ROUNDS', icon:'🔮', cost:55, rarity:'epic',   cat:'mod', desc:'Precise — like a Jedi\'s blade.',apply:g=>{g.p.pierce=true;}},
-  {id:'m_chain',name:'EMPEROR\'S LIGHTNING',    icon:'🌩️',cost:60, rarity:'epic',   cat:'mod', desc:'UNLIMITED POWER — with chain damage.',   apply:g=>{g.p.chain=true;}},
-  {id:'m_mag',  name:'TRACTOR BEAM LITE',   icon:'🧲', cost:20, rarity:'common', cat:'mod', desc:'We have you in our tractor beam.',       apply:g=>{g.p.magnet=250;}},
-  {id:'m_shre', name:'CYLON SHIELD MATRIX',  icon:'🔋', cost:35, rarity:'rare',   cat:'mod', desc:'Cylon resurrection protocol: shields.',       apply:g=>{g.p.shRegen+=8;}},
+  {id:'sw_l2',  name:'TWIN ION CANNONS',    icon:'⚔️', cost:30, rarity:'rare',      cat:'wpn', wpnId:'l2',  desc:'These are not the droids... [2 beams, 10 dmg, fast]', builds:['l1','rp']},
+  {id:'sw_l3',  name:'QUAD TURBOLASER',     icon:'⚔️', cost:50, rarity:'epic',      cat:'wpn', wpnId:'l3',  desc:'Use the Force and four barrels [4 beams, 9 dmg, fast]', builds:['l1','l2','rp']},
+  {id:'sw_pl',  name:'CYLON PULSAR',        icon:'🔴', cost:50, rarity:'epic',      cat:'wpn', wpnId:'pl',  desc:'By your command, fire! [1 shot, 28 dmg, big]'},
+  {id:'sw_pl2', name:'PHOTON TORPEDO',      icon:'🟠', cost:75, rarity:'epic',      cat:'wpn', wpnId:'pl2', desc:'To boldly blow up what no one has blown up before [1 shot, 42 dmg, huge]', builds:['pl','vr','orb']},
+  {id:'sw_sc',  name:'MANDALORIAN SCATTER', icon:'💠', cost:35, rarity:'rare',      cat:'wpn', wpnId:'sc',  desc:'I can bring you in warm, or cold [3-spread, 9 dmg]'},
+  {id:'sw_sc2', name:"GROGU'S WRATH",       icon:'💠', cost:55, rarity:'epic',      cat:'wpn', wpnId:'sc2', desc:'This is the Way of maximum spread [6-spread, 8 dmg]', builds:['sc','tri','hex']},
+  {id:'sw_vr',  name:'DEATH STAR BEAM',     icon:'🟣', cost:90, rarity:'legendary', cat:'wpn', wpnId:'vr',  desc:"That's no moon, that's a weapon [1 beam, 35 dmg, pierce]"},
+  {id:'sw_tri', name:'COLONIAL VIPER GUNS', icon:'🌟', cost:55, rarity:'epic',      cat:'wpn', wpnId:'tri', desc:'So say we all, fire everything! [3-wide, 15 dmg]'},
+  {id:'sw_hex', name:'42-WAY IMPROBABILITY',icon:'🌟', cost:75, rarity:'epic',      cat:'wpn', wpnId:'hex', desc:'The answer is 42 projectiles [6-ring, 13 dmg]', builds:['sc','tri','sc2']},
+  {id:'sw_rp',  name:'STORMTROOPER SPECIAL',icon:'🩷', cost:40, rarity:'rare',      cat:'wpn', wpnId:'rp',  desc:'Aim bad, fire rate legendary [1 beam, 7 dmg, hyper-fast]'},
+  {id:'sw_rp2', name:'INFINITE IMPROBABILITY',icon:'🩷',cost:65, rarity:'epic',     cat:'wpn', wpnId:'rp2', desc:'At this rate, entropy wins anyway [1 beam, 6 dmg, insane rate]', builds:['rp','l1','l2']},
+  {id:'sw_snp', name:'GAUSS REPEATER',      icon:'🩵', cost:80, rarity:'legendary', cat:'wpn', wpnId:'snp', desc:'Make it so. Right through them. [1 shot, 55 dmg, long range]'},
+  {id:'sw_snp2',name:'HAMMER OF THOR',      icon:'🩵', cost:110,rarity:'legendary', cat:'wpn', wpnId:'snp2',desc:'Worthy of the son of Odin [1 shot, 80 dmg, max range]', builds:['snp','vr']},
+  {id:'sw_hm',  name:'PROTON TORPEDO',      icon:'🟡', cost:60, rarity:'epic',      cat:'wpn', wpnId:'hm',  desc:'Lock S-foils in attack position [1 missile, 22 dmg, homing]'},
+  {id:'sw_hm2', name:'CYLON RAIDER SWARM',  icon:'🟠', cost:80, rarity:'epic',      cat:'wpn', wpnId:'hm2', desc:'There are many copies, seek them [3 missiles, 16 dmg, homing]', builds:['hm','bm']},
+  {id:'sw_bm',  name:'RICOCHETING TRIBBLE', icon:'🟢', cost:65, rarity:'epic',      cat:'wpn', wpnId:'bm',  desc:'Highly illogical, but effective [1 shot, 18 dmg, bounces]', builds:['hm','sc']},
+  {id:'sw_orb', name:'SPICE HARVESTER SHOT',icon:'🩷', cost:70, rarity:'epic',      cat:'wpn', wpnId:'orb', desc:'He who controls the spice controls the firepower [1 orb, 38 dmg, slow]', builds:['pl','vr']},
+  {id:'m_rep',  name:'BACTA TANK PATCH',    icon:'🔧', cost:20, rarity:'common', cat:'mod', hullRepair:50,    desc:'Hull breach sealed. [+50 hull]',              apply:g=>{g.p.hp=Math.min(g.p.maxHp,g.p.hp+50);}},
+  {id:'m_rep2', name:'FULL BACTA IMMERSION',icon:'❤️', cost:45, rarity:'rare',   cat:'mod', hullRepair:'full',desc:"I'm giving her all she's got! [full hull restore]",apply:g=>{g.p.hp=g.p.maxHp;}},
+  {id:'m_sh1',  name:'DEFLECTOR ARRAY',     icon:'🔵', cost:25, rarity:'common', cat:'mod', desc:'May the shield be with you. [+50 max shield]',       apply:g=>{g.p.maxSh+=50;g.p.sh=Math.min(g.p.sh+50,g.p.maxSh);}},
+  {id:'m_hull', name:'BESKAR PLATING',      icon:'🛡️', cost:30, rarity:'common', cat:'mod', desc:'This is the armor you ARE looking for. [+60 max hull]',apply:g=>{g.p.maxHp+=60;g.p.hp=Math.min(g.p.hp+30,g.p.maxHp);}},
+  {id:'m_spd',  name:'KESSEL RUN THRUSTERS',icon:'💨', cost:35, rarity:'rare',   cat:'mod', desc:'Never tell me the odds. Just go faster. [+25% speed]', apply:g=>{g.p.spd*=1.25;}},
+  {id:'m_fr',   name:'KOOLER UNIT',         icon:'❄️', cost:40, rarity:'rare',   cat:'mod', desc:'Lando would approve this mod. [+20% fire rate]',     apply:g=>{g.p.wpn.fr*=0.8;}},
+  {id:'m_dmg',  name:'KYBER CRYSTAL CELL',  icon:'⚡', cost:50, rarity:'epic',   cat:'mod', desc:'Power from the kyber crystal surges. [+20% damage]',  apply:g=>{g.p.dmgMult*=1.2;}},
+  {id:'m_dmg2', name:'SITH OVERCHARGE',     icon:'🔥', cost:80, rarity:'epic',   cat:'mod', desc:'Dark side power, spectacular and dangerous. [+40% damage]',apply:g=>{g.p.dmgMult*=1.4;}},
+  {id:'m_dash', name:'WARP FIELD COILS',    icon:'🌀', cost:30, rarity:'rare',   cat:'mod', desc:'Engage! Warp nine, Mr. Crusher. [-35% dash cooldown]', apply:g=>{g.p.dashMax*=0.65;}},
+  {id:'m_regen',name:'MIDICHLORIAN INJECTORS',icon:'🤖',cost:45,rarity:'rare',   cat:'mod', desc:'Midi-chlorians doing their thing. [+3 hull/sec regen]', apply:g=>{g.p.hpRegen+=3;}},
+  {id:'m_pierce',name:'LIGHTSABER ROUNDS',  icon:'🔮', cost:55, rarity:'epic',   cat:'mod', desc:'Precise like a Jedi blade. [bullets pierce all enemies]',apply:g=>{g.p.pierce=true;}},
+  {id:'m_chain',name:"EMPEROR'S LIGHTNING", icon:'🌩️',cost:60, rarity:'epic',   cat:'mod', desc:'UNLIMITED POWER! With chain damage. [20% chain hit chance]',apply:g=>{g.p.chain=true;}},
+  {id:'m_mag',  name:'TRACTOR BEAM LITE',   icon:'🧲', cost:20, rarity:'common', cat:'mod', desc:'We have you in our tractor beam. [double scrap range]', apply:g=>{g.p.magnet=250;}},
+  {id:'m_shre', name:'CYLON SHIELD MATRIX', icon:'🔋', cost:35, rarity:'rare',   cat:'mod', desc:'Cylon resurrection protocol: shields. [+8 shield/sec regen]',apply:g=>{g.p.shRegen+=8;}},
 ];
 
 // ═══════════════════════════════════════════════
@@ -499,7 +552,258 @@ function createPlayer(){
   };
 }
 
+// ═══════════════════════════════════════════════
+//  JSONBIN LEADERBOARD
+// ═══════════════════════════════════════════════
+var BIN_ID  = '69a8b66443b1c97be9b40901';
+var BIN_KEY = '$2a$10$BXxp4Rf/9yqLHEl5yO/1xuzqkc09CGSuwkWHKaJo4XKSC.zzU6cf.';
+var BIN_URL = 'https://api.jsonbin.io/v3/b/' + BIN_ID;
+
+function getCallsign(){
+  var el = document.getElementById('callsign-input');
+  var raw = el ? el.value.trim().toUpperCase() : '';
+  if(!raw){ raw = localStorage.getItem('voidrunner_callsign') || 'UNKNOWN PILOT'; }
+  if(raw) localStorage.setItem('voidrunner_callsign', raw);
+  return raw || 'UNKNOWN PILOT';
+}
+
+function fetchLeaderboard(callback){
+  var el = document.getElementById('lb-content');
+  if(el) el.innerHTML = '<div style="color:rgba(255,255,255,.25);font-size:10px;letter-spacing:2px;">SCANNING THE GALAXY...</div>';
+  fetch(BIN_URL + '/latest', {
+    headers: { 'X-Master-Key': BIN_KEY }
+  })
+  .then(function(r){ return r.json(); })
+  .then(function(data){
+    var scores = (data.record && data.record.scores) ? data.record.scores : [];
+    renderLeaderboard(scores);
+    if(callback) callback(scores);
+  })
+  .catch(function(){
+    if(el) el.innerHTML = '<div style="color:rgba(240,90,74,.5);font-size:10px;letter-spacing:2px;">COMMS OFFLINE — COULD NOT REACH GALACTIC COMMAND</div>';
+  });
+}
+
+function submitScore(entry, callback){
+  // Fetch current, insert, sort, keep top 100, update
+  fetch(BIN_URL + '/latest', { headers:{ 'X-Master-Key': BIN_KEY } })
+  .then(function(r){ return r.json(); })
+  .then(function(data){
+    var scores = (data.record && data.record.scores) ? data.record.scores : [];
+    scores.push(entry);
+    scores.sort(function(a,b){ return b.score - a.score; });
+    scores = scores.slice(0, 100);
+    return fetch(BIN_URL, {
+      method: 'PUT',
+      headers: { 'Content-Type':'application/json', 'X-Master-Key': BIN_KEY },
+      body: JSON.stringify({ scores: scores })
+    }).then(function(){ return scores; });
+  })
+  .then(function(scores){
+    if(callback) callback(scores);
+  })
+  .catch(function(){
+    showToast('COMMS OFFLINE — SCORE NOT SUBMITTED');
+  });
+}
+
+function renderLeaderboard(scores){
+  var el = document.getElementById('lb-content');
+  if(!el) return;
+  var myName = (localStorage.getItem('voidrunner_callsign') || '').toUpperCase();
+  if(!scores.length){
+    el.innerHTML = '<div style="color:rgba(255,255,255,.2);font-size:10px;letter-spacing:2px;">NO PILOTS ON RECORD — BE THE FIRST</div>';
+    return;
+  }
+  var medals = ['🥇','🥈','🥉'];
+  var html = '';
+  scores.forEach(function(s, i){
+    var isMe = myName && s.name === myName;
+    var cls = 'lb-row' + (isMe?' lb-me':'') + (i<3?' lb-top':'');
+    var rank = i < 3 ? medals[i] : ('#' + (i+1));
+    var m = Math.floor((s.time||0)/60), sec = Math.floor((s.time||0)%60);
+    html += '<div class="' + cls + '">'
+      + '<div class="lb-rank">' + rank + '</div>'
+      + '<div class="lb-name">' + (s.name||'UNKNOWN') + '</div>'
+      + '<div class="lb-score">' + (s.score||0).toLocaleString() + '</div>'
+      + '<div class="lb-detail">S' + (s.wave||1) + ' · ' + (s.kills||0) + 'K · ' + m + 'm' + sec + 's</div>'
+      + '</div>';
+  });
+  el.innerHTML = html;
+}
+
+// ═══════════════════════════════════════════════
+//  SAVE / LOAD SYSTEM
+// ═══════════════════════════════════════════════
+var SAVE_KEY    = 'voidrunner_run';
+var HISCORE_KEY = 'voidrunner_hiscores';
+var META_KEY    = 'voidrunner_meta';
+
+function loadMeta(){
+  try{ return JSON.parse(localStorage.getItem(META_KEY)) || {totalKills:0,totalRuns:0,bestWave:0,bestScore:0,totalTime:0,unlocks:[]}; }
+  catch(e){ return {totalKills:0,totalRuns:0,bestWave:0,bestScore:0,totalTime:0,unlocks:[]}; }
+}
+function saveMeta(m){ try{ localStorage.setItem(META_KEY, JSON.stringify(m)); }catch(e){} }
+
+function loadHiScores(){
+  try{ return JSON.parse(localStorage.getItem(HISCORE_KEY)) || []; }
+  catch(e){ return []; }
+}
+function addHiScore(entry){
+  var scores = loadHiScores();
+  scores.push(entry);
+  scores.sort(function(a,b){ return b.score - a.score; });
+  scores = scores.slice(0,5);
+  try{ localStorage.setItem(HISCORE_KEY, JSON.stringify(scores)); }catch(e){}
+  return scores;
+}
+
+function saveGame(manual){
+  if(!G || gState==='over') return;
+  var snapshot = {
+    wave:G.wave, score:G.score, kills:G.kills,
+    xp:G.xp, xpNext:G.xpNext, level:G.level,
+    scrap:G.scrap, emps:G.emps,
+    ownedWpns:G.ownedWpns,
+    shopSold:Array.from(shopSold),
+    time:G.time,
+    p:{
+      hp:G.p.hp, maxHp:G.p.maxHp,
+      sh:G.p.sh, maxSh:G.p.maxSh,
+      shRegen:G.p.shRegen, hpRegen:G.p.hpRegen,
+      spd:G.p.spd, dmgMult:G.p.dmgMult,
+      pierce:G.p.pierce, chain:G.p.chain,
+      magnet:G.p.magnet, dashMax:G.p.dashMax,
+      wpnId:G.p.wpn.id,
+    },
+    savedAt:Date.now(),
+  };
+  try{
+    localStorage.setItem(SAVE_KEY, JSON.stringify(snapshot));
+    if(manual) showToast('RUN SAVED — GODSPEED, PILOT');
+  }catch(e){ showToast('SAVE FAILED — STORAGE FULL'); }
+}
+
+function hasSavedRun(){
+  try{ return !!localStorage.getItem(SAVE_KEY); }catch(e){ return false; }
+}
+function deleteSave(){
+  try{ localStorage.removeItem(SAVE_KEY); }catch(e){}
+}
+
+function resumeGame(){
+  var snap;
+  try{ snap = JSON.parse(localStorage.getItem(SAVE_KEY)); }catch(e){ return; }
+  if(!snap) return;
+  if(raf) cancelAnimationFrame(raf);
+  gState='playing';
+  shopSold = new Set(snap.shopSold || []);
+  showScreen(null);
+  document.getElementById('hud').style.display='flex';
+  initStars(); particles=[]; floaters=[];
+  var wpn = WEAPONS.find(function(w){ return w.id===snap.p.wpnId; }) || WEAPONS[0];
+  G = {
+    p:{
+      x:W/2, y:H/2, sz:13, aimA:0, trail:[], fTimer:0,
+      dashCD:0, dashing:false, dashT:0, dashVx:0, dashVy:0, inv:0,
+      hpRegenT:0, shDelay:0,
+      hp:snap.p.hp, maxHp:snap.p.maxHp,
+      sh:snap.p.sh, maxSh:snap.p.maxSh,
+      shRegen:snap.p.shRegen, hpRegen:snap.p.hpRegen,
+      spd:snap.p.spd, dmgMult:snap.p.dmgMult,
+      pierce:snap.p.pierce, chain:snap.p.chain,
+      magnet:snap.p.magnet, dashMax:snap.p.dashMax,
+      wpn:{...wpn},
+    },
+    bullets:[], eBullets:[], enemies:[],
+    orbs:[], scraps:[], empPickups:[],
+    wave:snap.wave, score:snap.score, kills:snap.kills,
+    xp:snap.xp, xpNext:snap.xpNext, level:snap.level,
+    scrap:snap.scrap, emps:snap.emps||0,
+    ownedWpns:snap.ownedWpns||[],
+    perks:[],
+    spawnList:[], spawnTimer:0, spawnInterval:0.8,
+    waveActive:false, waveSpawned:0,
+    countdown:4.0, countdownDone:false,
+    time:snap.time||0, autoFire:true,
+  };
+  lastT = performance.now();
+  setupTouch(); updateEMPBtn();
+  showToast('RUN RESTORED — SECTOR ' + G.wave);
+  loop(lastT);
+}
+
+var toastTO = null;
+function showToast(msg){
+  var el = document.getElementById('save-toast');
+  if(!el) return;
+  el.textContent = msg;
+  el.classList.add('show');
+  if(toastTO) clearTimeout(toastTO);
+  toastTO = setTimeout(function(){ el.classList.remove('show'); }, 2500);
+}
+
+function renderHiScores(containerId){
+  var el = document.getElementById(containerId);
+  if(!el) return;
+  var scores = loadHiScores();
+  var meta = loadMeta();
+  var html = '';
+  if(scores.length){
+    html += '<div style="font-size:9px;letter-spacing:3px;color:rgba(255,255,255,.25);margin-bottom:4px;">YOUR BEST RUNS</div>';
+    scores.forEach(function(s,i){
+      var medal = ['🥇','🥈','🥉','④','⑤'][i];
+      html += medal + ' &nbsp;<span>' + s.score.toLocaleString() + '</span>&nbsp; S' + s.wave + ' &nbsp;·&nbsp; ' + s.kills + ' kills<br>';
+    });
+  }
+  if(meta.totalRuns > 0){
+    html += '<br><span style="color:rgba(255,255,255,.18);font-size:9px;">RUNS: ' + meta.totalRuns + ' &nbsp;·&nbsp; BEST: S' + meta.bestWave + ' &nbsp;·&nbsp; KILLS: ' + meta.totalKills + '</span>';
+  }
+  el.innerHTML = html || '<div style="color:rgba(255,255,255,.15);font-size:10px;letter-spacing:2px;">NO RECORDS YET</div>';
+}
+
+function initSaveUI(){
+  // Restore callsign
+  var saved = localStorage.getItem('voidrunner_callsign');
+  var inp = document.getElementById('callsign-input');
+  if(inp && saved) inp.value = saved;
+  // Force uppercase as user types
+  if(inp) inp.addEventListener('input', function(){ this.value = this.value.toUpperCase(); });
+
+  var resumeBtn = document.getElementById('btn-resume');
+  if(resumeBtn && hasSavedRun()){
+    resumeBtn.style.display = 'inline-block';
+    try{
+      var snap = JSON.parse(localStorage.getItem(SAVE_KEY));
+      if(snap) resumeBtn.textContent = '[ RESUME — SECTOR ' + snap.wave + ' · ' + snap.score.toLocaleString() + ' PTS ]';
+    }catch(e){}
+  }
+  renderHiScores('hiscore-display');
+  // Quietly fetch global leaderboard and show top 3 on title
+  fetchLeaderboard(function(scores){
+    var el = document.getElementById('hiscore-display');
+    if(!el || !scores.length) return;
+    var myName = (localStorage.getItem('voidrunner_callsign')||'').toUpperCase();
+    var top = scores.slice(0,3);
+    var html = '<div style="font-size:9px;letter-spacing:3px;color:rgba(240,196,74,.5);margin-bottom:4px;margin-top:8px;">🏆 GALACTIC TOP 3</div>';
+    var medals = ['🥇','🥈','🥉'];
+    top.forEach(function(s,i){
+      var isMe = myName && s.name===myName;
+      html += medals[i] + ' &nbsp;<span style="' + (isMe?'color:#4af0c4;':'' ) + '">' + (s.name||'?') + '</span>&nbsp; ' + (s.score||0).toLocaleString() + '<br>';
+    });
+    // Append local records below
+    var localScores = loadHiScores();
+    if(localScores.length){
+      html += '<br><div style="font-size:9px;letter-spacing:2px;color:rgba(255,255,255,.2);">YOUR BEST RUNS</div>';
+      localScores.slice(0,3).forEach(function(s,i){
+        html += ['🥇','🥈','🥉'][i] + ' &nbsp;<span>' + s.score.toLocaleString() + '</span>&nbsp; S' + s.wave + ' · ' + s.kills + 'K<br>';
+      });
+    }
+    el.innerHTML = html;
+  });
+}
 function startGame(){
+  deleteSave();
   if(raf) cancelAnimationFrame(raf);
   gState='playing';
   shopSold = new Set();
@@ -767,8 +1071,8 @@ function update(dt){
         const amt=rInt(lo,hi);
         dropScrap(e.x,e.y,amt);
       }
-      // EMP CONSUMABLE DROP — low chance, higher for elites/bosses
-      const empChance = e.isBoss?0.7 : e.isElite?0.35 : 0.06;
+      // EMP CONSUMABLE DROP — rare, only elites and bosses
+      const empChance = e.isBoss?0.30 : e.isElite?0.12 : 0.0;
       if(Math.random()<empChance){ dropEMP(e.x,e.y); }
 
       // INSTANT DROP (elite/boss)
@@ -1000,6 +1304,7 @@ function gainXP(a){
 // ═══════════════════════════════════════════════
 function openShop(){
   gState='shop';
+  saveGame(false); // auto-save at every wave
   updateEMPBtn();
   document.getElementById('shopWave').textContent = 'SECTOR ' + G.wave + ' CLEARED — GOOD HUNTING';
   document.getElementById('shopScrap').textContent = '⬡ ' + G.scrap + ' TIBANNA GAS';
@@ -1051,11 +1356,20 @@ function buildShopGrid(){
     var sold = shopSold.has(item.id);
     var cantAfford = G.scrap < item.cost;
     var isUpgrade = item.wpnId && upgrades.includes(item.wpnId);
-    var upgradeTag = isUpgrade ? '<span style="font-size:9px;color:#4af0c4;"> UP</span>' : '';
+    var upgradeTag = isUpgrade ? '<span style="font-size:9px;color:#4af0c4;"> ↑</span>' : '';
+    var descParts = item.desc.match(/^(.*)\s\[([^\]]+)\]$/);
+    var quote = descParts ? descParts[1] : item.desc;
+    var stat  = descParts ? descParts[2] : '';
     var soldBadge = sold ? '<div class="sold-badge">INSTALLED</div>' : '';
+    var statLine = stat ? '<div class="sc-stat">&#x25B8; ' + stat + '</div>' : '';
     return '<div class="shop-card ' + (cantAfford?'cant-afford':'') + '" onclick="buyItem(\'' + item.id + '\')">' +
       '<div class="sc-rarity r-' + item.rarity + '">' + item.rarity.toUpperCase() + '</div>' +
       '<div class="sc-icon">' + item.icon + '</div>' +
+      '<div class="sc-name">' + item.name + upgradeTag + '</div>' +
+      '<div class="sc-cost">&#x2B21; ' + item.cost + ' TIBANNA</div>' +
+      statLine +
+      '<div class="sc-desc">' + quote + '</div>' +
+      soldBadge + '</div>';
       '<div class="sc-name">' + item.name + upgradeTag + '</div>' +
       '<div class="sc-cost">&#x2B21; ' + item.cost + ' TIBANNA</div>' +
       '<div class="sc-desc">' + item.desc + '</div>' +
@@ -1122,11 +1436,44 @@ function announce(txt){
 // ═══════════════════════════════════════════════
 function showGameOver(){
   gState='over';
-  const m=Math.floor(G.time/60), s=Math.floor(G.time%60);
-  document.getElementById('goStats').innerHTML='SCORE: '+G.score.toLocaleString()+'<br>HOSTILES NEUTRALISED: '+G.kills+'<br>SECTORS: '+G.wave+'<br>TIME IN THE BLACK: '+m+'m '+s+'s'+'<br>TIBANNA RECOVERED: '+G.scrap+'<br><br><i style="color:rgba(255,255,255,.3);font-size:10px;">"I\'ve got a bad feeling about this."</i>';
-  showScreen('gameover');
-}
+  var meta = loadMeta();
+  meta.totalKills += G.kills;
+  meta.totalRuns  += 1;
+  meta.totalTime  += Math.floor(G.time);
+  if(G.wave  > meta.bestWave)  meta.bestWave  = G.wave;
+  if(G.score > meta.bestScore) meta.bestScore = G.score;
+  saveMeta(meta);
+  addHiScore({score:G.score, wave:G.wave, kills:G.kills, time:Math.floor(G.time)});
+  deleteSave();
 
+  var m=Math.floor(G.time/60), s=Math.floor(G.time%60);
+  document.getElementById('goStats').innerHTML='SCORE: '+G.score.toLocaleString()+'<br>HOSTILES NEUTRALISED: '+G.kills+'<br>SECTORS: '+G.wave+'<br>TIME IN THE BLACK: '+m+'m '+s+'s'+'<br>TIBANNA RECOVERED: '+G.scrap+'<br><br><i style="color:rgba(255,255,255,.3);font-size:10px;">"I\'ve got a bad feeling about this."</i>';
+  renderHiScores('go-hiscore');
+  showScreen('gameover');
+
+  // Submit to global leaderboard
+  var callsign = getCallsign();
+  var rankMsg = document.getElementById('go-rank-msg');
+  if(rankMsg) rankMsg.textContent = 'TRANSMITTING TO GALACTIC COMMAND...';
+  submitScore({
+    name: callsign,
+    score: G.score,
+    wave: G.wave,
+    kills: G.kills,
+    time: Math.floor(G.time),
+    date: new Date().toISOString().slice(0,10),
+  }, function(scores){
+    var rank = 0;
+    for(var i=0;i<scores.length;i++){ if(scores[i].name===callsign && scores[i].score===G.score){ rank=i+1; break; } }
+    if(rankMsg){
+      if(rank===1) rankMsg.textContent = '🥇 NEW GALACTIC RECORD, ' + callsign + '!';
+      else if(rank<=3) rankMsg.textContent = '🏆 RANK #' + rank + ' IN THE GALAXY, ' + callsign + '!';
+      else if(rank<=10) rankMsg.textContent = '⭐ TOP 10 — RANK #' + rank + ', ' + callsign;
+      else rankMsg.textContent = 'RANK #' + rank + ' — ' + callsign + ' LOGGED TO GALACTIC COMMAND';
+    }
+    renderLeaderboard(scores);
+  });
+}
 // ═══════════════════════════════════════════════
 //  HUD
 // ═══════════════════════════════════════════════
@@ -1399,6 +1746,7 @@ function titleLoop(ts){
 }
 lastT=performance.now();
 titleLoop(lastT);
+initSaveUI();
 </script>
 </body>
 </html>
