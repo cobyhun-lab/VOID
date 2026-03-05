@@ -220,6 +220,7 @@ canvas{display:block;position:fixed;top:0;left:0;}
       <div class="sh-title">USCSS NOSTROMO TRADING CO.</div>
       <div class="sh-wave" id="shopWave">WAVE 1 CLEARED</div>
       <div class="sh-scrap" id="shopScrap">⬡ 0 TIBANNA GAS</div>
+      <div id="shop-buy-limit" style="font-size:9px;letter-spacing:2px;color:rgba(255,255,255,.3);margin-top:3px;">PURCHASES: 0 / 5</div>
     </div>
     <div class="shop-section-title">ARMORY &amp; SHIP SYSTEMS</div>
     <div class="shop-grid" id="shopGrid"></div>
@@ -422,6 +423,7 @@ let keys = {}, mouse = {x:W/2,y:H/2};
 let stars = [], particles = [], floaters = [];
 let shakeAmt = 0;
 let shopSold = new Set();
+let shopBuys = 0;
 
 // ═══════════════════════════════════════════════
 //  INPUT
@@ -1102,6 +1104,8 @@ function update(dt){
 
   // ---- ENEMIES ----
   G.enemies.forEach(e=>{
+    if(e.poisoned){e.poisonT-=dt;if(e.poisonT<=0){e.poisoned=false;}else{e.hp-=e.poisonDmg*dt;e.flash=Math.max(e.flash||0,0.3);}}
+    if(e.slowed){e.slowT-=dt;if(e.slowT<=0){e.slowed=false;e.spd=e.spdBase||e.spd;}}
     // EMP stun — freeze movement and firing, flash blue
     if(e.stunned>0){
       e.stunned-=dt;
@@ -1156,6 +1160,7 @@ function update(dt){
       }
     });
     if(e.hp<=0){
+      if(p.splitMod){for(var si=0;si<2;si++){var sa=Math.random()*Math.PI*2;G.bullets.push({x:e.x,y:e.y,vx:Math.cos(sa)*400,vy:Math.sin(sa)*400,life:0.7,dmg:p.wpn.dmg*0.4*p.dmgMult,col:"#ffff80",gl:"rgba(255,255,128,.7)",w:4,big:false,homing:false,bounce:false,chain_wpn:false,poison:false,slow:false,split:false,volatile:false,phantom:false});}}
       explode(e.x,e.y,e.col,e.isBoss||e.isElite);
       if(e.isBoss) shake(16); else if(e.isElite) shake(8); else shake(3);
       G.score+=e.sc; G.kills++;
@@ -1251,7 +1256,8 @@ function update(dt){
       if((b.bounces||0)>4) b.life=0; // die after 5 bounces
     }
   });
-  G.bullets=G.bullets.filter(b=>b.life>0);
+  G.bullets.forEach(function(b){if(b.phantom){if(b.x<-10)b.x=W+10;else if(b.x>W+10)b.x=-10;if(b.y<-10)b.y=H+10;else if(b.y>H+10)b.y=-10;}});
+  G.bullets=G.bullets.filter(b=>b.life>0&&!b.dead);
 
   // ---- EMP PICKUPS ----
   if(!G.empPickups) G.empPickups=[];
@@ -1325,8 +1331,10 @@ function fireBullets(){
       x:p.x+Math.cos(a)*18, y:p.y+Math.sin(a)*18,
       vx:Math.cos(a)*w.spd, vy:Math.sin(a)*w.spd,
       life:w.homing?3.5:1.8,
-      dmg:bDmg, col:w.col, gl:w.gl,
+      dmg:(p.biggerShot?bDmg*1.15:bDmg), col:w.col, gl:w.gl, w:(p.biggerShot?Math.min((w.w||3)*1.5,18):(w.w||3)),
       homing:w.homing||false, bounce:w.bounce||false, chain_wpn:w.chain_wpn||false,
+      poison:p.poisonMod||false, slow:p.slowMod||false, split:p.splitMod||false,
+      volatile:p.volatileMod||false, phantom:p.phantomMod||false,
     });
   }
 }
@@ -1413,6 +1421,7 @@ function gainXP(a){
 // ═══════════════════════════════════════════════
 function openShop(){
   gState='shop';
+  shopBuys=0;
   saveGame(false); // auto-save at every wave
   updateEMPBtn();
   document.getElementById('shopWave').textContent = 'SECTOR ' + G.wave + ' CLEARED — GOOD HUNTING';
@@ -1449,6 +1458,7 @@ function buildShopGrid(){
     if(i.cat !== 'mod') return false;
     if(shopSold.has(i.id) && !i.repeatable) return false;
     if(i.hullRepair && isHullFull) return false; // hull full — don't offer
+    if(i.rarePool && Math.random()>0.18) return false; // rare pool items: ~1 in 5 chance
     return true;
   });
   shuffle(modPool);
@@ -1489,17 +1499,23 @@ function buildShopGrid(){
 function buyItem(id){
   const item = SHOP_ITEMS.find(i=>i.id===id);
   if(!item) return;
+  if(shopBuys>=5){ showToast('MAX 5 PURCHASES PER SECTOR — JUMP OUT'); return; }
   if(shopSold.has(id) && !item.repeatable) return;
   if(G.scrap < item.cost) return;
   // Hull repair guard
   if(item.hullRepair && G.p.hp >= G.p.maxHp) return;
   G.scrap -= item.cost;
   if(!item.repeatable) shopSold.add(item.id);
+  shopBuys++;
+  var bl=document.getElementById('shop-buy-limit');
+  if(bl){ bl.textContent='PURCHASES: '+shopBuys+' / 5'; if(shopBuys>=5) bl.style.color='#f05a4a'; }
   if(item.wpnId){
     // Store old weapon in owned list so we don't re-offer it
     if(!G.ownedWpns) G.ownedWpns = [];
     G.ownedWpns.push(G.p.wpn.id);
+    var prevWpnName = G.p.wpn.name;
     G.p.wpn = {...WEAPONS.find(w=>w.id===item.wpnId)};
+    floatText(W/2, H/2-30, prevWpnName + ' REPLACED', 'rgba(255,255,255,.35)');
   } else if(item.apply){
     item.apply(G);
   }
@@ -1873,484 +1889,379 @@ initSaveUI();
 
 <script>
 // ═══════════════════════════════════════════════════════════════
-//  AUDIO ENGINE — Synthwave + SFX via Web Audio API
+//  AUDIO ENGINE v2 — bulletproof Web Audio API
+//  Rule: every oscillator/source is created fresh, used once,
+//  never stored after .start(). try/catch everywhere.
 // ═══════════════════════════════════════════════════════════════
 var AC = null, musicVol = 0.6, sfxVol = 0.8;
-var musicGain = null, sfxGain = null;
-var musicNodes = {osc:[], lfo:[], gain:[]};
-var currentTrack = null;
+var masterGain, musicGain, sfxGain;
+var _musicStopId = 0;   // incremented on every stopAllMusic — stale ticks self-cancel
+var _sfxLastShoot = 0;
 
 function initAudio(){
   if(AC) return;
   try{
-    AC = new (window.AudioContext||window.webkitAudioContext)();
-    musicGain = AC.createGain(); musicGain.gain.value = musicVol;
-    sfxGain   = AC.createGain(); sfxGain.gain.value   = sfxVol;
-    // Master compressor
+    AC = new (window.AudioContext || window.webkitAudioContext)();
+    masterGain = AC.createGain(); masterGain.gain.value = 1;
+    musicGain  = AC.createGain(); musicGain.gain.value  = musicVol;
+    sfxGain    = AC.createGain(); sfxGain.gain.value    = sfxVol;
     var comp = AC.createDynamicsCompressor();
-    comp.threshold.value=-18; comp.ratio.value=4;
+    comp.threshold.value = -18; comp.ratio.value = 4;
     musicGain.connect(comp); sfxGain.connect(comp);
-    comp.connect(AC.destination);
-  }catch(e){ AC = null; }
+    comp.connect(masterGain); masterGain.connect(AC.destination);
+  } catch(e){ AC = null; }
 }
 
-function setMusicVol(v){ musicVol=v; if(musicGain) musicGain.gain.setTargetAtTime(v,AC.currentTime,0.1); }
-function setSfxVol(v)  { sfxVol=v;   if(sfxGain)   sfxGain.gain.setTargetAtTime(v,AC.currentTime,0.1); }
+function setMusicVol(v){ musicVol=v; if(musicGain) musicGain.gain.setTargetAtTime(v, AC.currentTime, 0.05); }
+function setSfxVol(v)  { sfxVol=v;   if(sfxGain)   sfxGain.gain.setTargetAtTime(v, AC.currentTime, 0.05); }
 
-// ── Low-level helpers ─────────────────────────────────────────────────────────
-function note(freq, t){ return 440*Math.pow(2,(freq-69)/12); } // MIDI to Hz
-
-function playTone(freq, dur, type, gainVal, when, dest){
-  if(!AC) return;
-  when = when||AC.currentTime;
-  var o = AC.createOscillator();
-  var g = AC.createGain();
-  o.type = type||'sine';
-  o.frequency.value = freq;
-  g.gain.setValueAtTime(gainVal||0.3, when);
-  g.gain.exponentialRampToValueAtTime(0.0001, when+dur);
-  o.connect(g); g.connect(dest||sfxGain);
-  o.start(when); o.stop(when+dur+0.05);
+// ── Primitive builders — always fresh nodes, fire-and-forget ────────────────
+function osc(freq, type, gainVal, dur, dest, when){
+  if(!AC || AC.state==='closed') return;
+  try{
+    var t = when !== undefined ? when : AC.currentTime;
+    var o = AC.createOscillator();
+    var g = AC.createGain();
+    o.type = type || 'sine';
+    o.frequency.value = freq;
+    g.gain.setValueAtTime(Math.max(0.0001, gainVal || 0.2), t);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(g); g.connect(dest || sfxGain);
+    o.start(t); o.stop(t + dur + 0.05);
+  } catch(e){}
 }
 
-function playNoise(dur, cutoff, gainVal, when){
-  if(!AC) return;
-  when = when||AC.currentTime;
-  var buf = AC.createBuffer(1, AC.sampleRate*dur, AC.sampleRate);
-  var d = buf.getChannelData(0);
-  for(var i=0;i<d.length;i++) d[i]=(Math.random()*2-1);
-  var src = AC.createBufferSource();
-  src.buffer = buf;
-  var f = AC.createBiquadFilter();
-  f.type='lowpass'; f.frequency.value=cutoff||2000;
-  var g = AC.createGain();
-  g.gain.setValueAtTime(gainVal||0.4, when);
-  g.gain.exponentialRampToValueAtTime(0.0001, when+dur);
-  src.connect(f); f.connect(g); g.connect(sfxGain);
-  src.start(when); src.stop(when+dur+0.05);
+function oscSweep(f1, f2, type, gainVal, dur, dest, when){
+  if(!AC || AC.state==='closed') return;
+  try{
+    var t = when !== undefined ? when : AC.currentTime;
+    var o = AC.createOscillator();
+    var g = AC.createGain();
+    o.type = type || 'sawtooth';
+    o.frequency.setValueAtTime(f1, t);
+    o.frequency.exponentialRampToValueAtTime(f2, t + dur);
+    g.gain.setValueAtTime(Math.max(0.0001, gainVal), t);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(g); g.connect(dest || sfxGain);
+    o.start(t); o.stop(t + dur + 0.05);
+  } catch(e){}
 }
 
-// ── SFX Library ───────────────────────────────────────────────────────────────
-function sfxShoot(wpnType){
+function noise(dur, cutoff, gainVal, dest, when){
+  if(!AC || AC.state==='closed') return;
+  try{
+    var t = when !== undefined ? when : AC.currentTime;
+    var len = Math.max(1, Math.ceil(AC.sampleRate * dur));
+    var buf = AC.createBuffer(1, len, AC.sampleRate);
+    var d = buf.getChannelData(0);
+    for(var i=0; i<len; i++) d[i] = Math.random()*2 - 1;
+    var src = AC.createBufferSource();
+    src.buffer = buf;
+    var flt = AC.createBiquadFilter();
+    flt.type = 'lowpass'; flt.frequency.value = cutoff || 2000;
+    var g = AC.createGain();
+    g.gain.setValueAtTime(Math.max(0.0001, gainVal || 0.3), t);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    src.connect(flt); flt.connect(g); g.connect(dest || sfxGain);
+    src.start(t); src.stop(t + dur + 0.05);
+  } catch(e){}
+}
+
+// ── SFX ─────────────────────────────────────────────────────────────────────
+function sfxShoot(wpnId){
   if(!AC) return;
-  var t=AC.currentTime;
-  if(wpnType==='plasma'||wpnType==='pl'||wpnType==='pl2'){
-    playTone(120,0.12,'sine',0.25,t); playTone(80,0.18,'sine',0.15,t+0.02);
-  } else if(wpnType==='snp'||wpnType==='snp2'){
-    playNoise(0.08,800,0.5,t); playTone(200,0.06,'sawtooth',0.2,t);
-  } else if(wpnType==='sc'||wpnType==='sc2'){
-    for(var i=0;i<3;i++) playNoise(0.06,1200,0.2,t+i*0.018);
-  } else if(wpnType==='hm'||wpnType==='hm2'){
-    playTone(440,0.04,'square',0.15,t); playTone(380,0.08,'sine',0.1,t+0.04);
-  } else if(wpnType==='arc'){
-    playTone(800,0.05,'square',0.12,t); playTone(1200,0.03,'square',0.08,t+0.02);
-  } else if(wpnType==='beam'){
-    // Continuous — only play occasionally
-    if(Math.random()>0.85) playTone(600+Math.random()*200,0.05,'sawtooth',0.06,t);
-  } else if(wpnType==='vr'){
-    playTone(60,0.2,'sawtooth',0.3,t); playTone(90,0.15,'sine',0.2,t);
-  } else {
-    // Default laser: quick ping
-    var f=880+Math.random()*220;
-    playTone(f,0.04,'square',0.1,t);
-    playTone(f*0.7,0.06,'sine',0.06,t+0.01);
-  }
+  var t = AC.currentTime;
+  var id = wpnId || 'l1';
+  if(id==='beam'){ if(Math.random()>0.8) osc(600+Math.random()*200,'sawtooth',0.04,0.05); return; }
+  if(id==='pl'||id==='pl2'){ osc(100,'sine',0.2,0.15,sfxGain,t); osc(60,'sine',0.12,0.2,sfxGain,t+0.02); return; }
+  if(id==='snp'||id==='snp2'){ noise(0.07,900,0.4,sfxGain,t); osc(180,'sawtooth',0.15,0.05,sfxGain,t); return; }
+  if(id==='sc'||id==='sc2'){ for(var i=0;i<3;i++) noise(0.05,1400,0.18,sfxGain,t+i*0.016); return; }
+  if(id==='hm'||id==='hm2'){ osc(420,'square',0.12,0.04,sfxGain,t); osc(360,'sine',0.08,0.08,sfxGain,t+0.04); return; }
+  if(id==='arc'){ osc(900,'square',0.1,0.04,sfxGain,t); osc(1400,'square',0.06,0.03,sfxGain,t+0.02); return; }
+  if(id==='vr'){ osc(55,'sawtooth',0.25,0.22,sfxGain,t); osc(80,'sine',0.15,0.18,sfxGain,t); return; }
+  // default laser
+  var f = 880 + Math.random()*220;
+  osc(f,'square',0.09,0.04,sfxGain,t);
+  osc(f*0.7,'sine',0.05,0.06,sfxGain,t+0.01);
 }
 
 function sfxHit(big){
   if(!AC) return;
-  var t=AC.currentTime;
-  playNoise(big?0.18:0.08, big?600:1800, big?0.5:0.25, t);
-  if(big) playTone(80,0.15,'sine',0.3,t);
-}
-
-function sfxPlayerHit(){
-  if(!AC) return;
-  var t=AC.currentTime;
-  playNoise(0.12,400,0.5,t);
-  playTone(150,0.1,'sawtooth',0.3,t);
+  noise(big?0.18:0.08, big?500:2000, big?0.45:0.22);
+  if(big) osc(75,'sine',0.25,0.15);
 }
 
 function sfxShieldHit(){
   if(!AC) return;
-  var t=AC.currentTime;
-  playTone(1200,0.05,'sine',0.2,t);
-  playTone(900,0.08,'sine',0.1,t+0.03);
+  osc(1100,'sine',0.18,0.05); osc(800,'sine',0.1,0.08,sfxGain,AC.currentTime+0.03);
+}
+
+function sfxPlayerHit(){
+  if(!AC) return;
+  noise(0.12,350,0.45); osc(140,'sawtooth',0.28,0.1);
 }
 
 function sfxExplosion(big){
   if(!AC) return;
-  var t=AC.currentTime;
-  playNoise(big?0.8:0.25, big?300:800, big?0.8:0.45, t);
-  if(big){ playTone(55,0.5,'sine',0.4,t); playTone(40,0.7,'sine',0.3,t+0.1); }
-}
-
-function sfxScrap(){
-  if(!AC) return;
-  var t=AC.currentTime;
-  playTone(1400+Math.random()*400, 0.06, 'sine', 0.08, t);
-}
-
-function sfxLevelUp(){
-  if(!AC) return;
-  var t=AC.currentTime;
-  var seq=[523,659,784,1047];
-  seq.forEach(function(f,i){ playTone(f,0.15,'sine',0.25,t+i*0.1); });
-}
-
-function sfxBuy(){
-  if(!AC) return;
-  var t=AC.currentTime;
-  playTone(660,0.08,'sine',0.2,t); playTone(880,0.1,'sine',0.2,t+0.08);
+  noise(big?0.8:0.22, big?250:900, big?0.75:0.4);
+  if(big){ osc(50,'sine',0.35,0.5); osc(38,'sine',0.25,0.7,sfxGain,AC.currentTime+0.1); }
 }
 
 function sfxEMP(){
   if(!AC) return;
-  var t=AC.currentTime;
-  // Sweeping zap
-  var o=AC.createOscillator(); var g=AC.createGain();
-  o.type='sawtooth';
-  o.frequency.setValueAtTime(200,t);
-  o.frequency.exponentialRampToValueAtTime(2000,t+0.3);
-  o.frequency.exponentialRampToValueAtTime(100,t+0.8);
-  g.gain.setValueAtTime(0.4,t);
-  g.gain.exponentialRampToValueAtTime(0.0001,t+0.8);
-  o.connect(g); g.connect(sfxGain);
-  o.start(t); o.stop(t+0.85);
-  playNoise(0.5,3000,0.3,t);
+  oscSweep(180,2200,'sawtooth',0.35,0.35);
+  oscSweep(2200,80,'sawtooth',0.2,0.5,sfxGain,AC.currentTime+0.35);
+  noise(0.5,3500,0.25);
 }
 
-function sfxMine(){
+function sfxLevelUp(){
   if(!AC) return;
-  sfxExplosion(false);
-  var t=AC.currentTime;
-  playTone(300,0.2,'sine',0.3,t+0.05);
+  var t = AC.currentTime;
+  [523,659,784,1047].forEach(function(f,i){ osc(f,'sine',0.22,0.15,sfxGain,t+i*0.1); });
+}
+
+function sfxBuy(){
+  if(!AC) return;
+  osc(660,'sine',0.18,0.08); osc(880,'sine',0.18,0.1,sfxGain,AC.currentTime+0.09);
 }
 
 function sfxWaveStart(){
   if(!AC) return;
-  var t=AC.currentTime;
-  // Rising synth sweep
-  var o=AC.createOscillator(); var g=AC.createGain();
-  o.type='sawtooth';
-  o.frequency.setValueAtTime(110,t);
-  o.frequency.exponentialRampToValueAtTime(440,t+0.5);
-  g.gain.setValueAtTime(0.2,t); g.gain.exponentialRampToValueAtTime(0.0001,t+0.5);
-  o.connect(g); g.connect(sfxGain);
-  o.start(t); o.stop(t+0.55);
+  oscSweep(110,440,'sawtooth',0.18,0.5);
 }
 
 function sfxGameOver(){
   if(!AC) return;
-  var t=AC.currentTime;
-  var seq=[440,370,311,277];
-  seq.forEach(function(f,i){ playTone(f,0.4,'sawtooth',0.25,t+i*0.22); });
-  playNoise(0.6,200,0.3,t+0.5);
+  var t = AC.currentTime;
+  [440,370,311,277].forEach(function(f,i){ osc(f,'sawtooth',0.22,0.4,sfxGain,t+i*0.22); });
+  noise(0.6,180,0.28,sfxGain,t+0.6);
 }
 
 function sfxShopOpen(){
   if(!AC) return;
-  var t=AC.currentTime;
-  playTone(523,0.1,'sine',0.15,t);
-  playTone(659,0.1,'sine',0.12,t+0.1);
+  osc(520,'sine',0.14,0.1); osc(660,'sine',0.12,0.1,sfxGain,AC.currentTime+0.11);
 }
 
-// ── Synthwave Music Engine ────────────────────────────────────────────────────
-var beatInterval=null, barCount=0, musicActive=false;
+// ── Music — drone nodes tracked, fire-and-forget beats ──────────────────────
+var _droneNodes = [];  // {o, g} pairs for long-running drones only
+var _musicTickId = 0;  // cancel stale tick loops
 
-// Synthwave chord progressions (MIDI notes)
-var SW_CHORDS = [
-  [45,52,57,60], // Am7
-  [43,50,55,59], // Gm7
-  [48,55,60,63], // Cm7
-  [41,48,53,57], // Fm7
-];
-var SW_BASS   = [33,31,36,29]; // A G C F (two octaves down)
-var SW_LEAD   = [69,72,71,69,67,69,71,72]; // A minor lead melody
-var SW_BPM    = 120;
-var sw_chord  = 0, sw_beat = 0, sw_bar = 0;
-var sw_beatT  = null;
-var sw_pad    = []; // sustain pad nodes
+function _killDrones(){
+  var nodes = _droneNodes.splice(0);
+  nodes.forEach(function(n){
+    try{ n.g.gain.setTargetAtTime(0.0001, AC.currentTime, 0.1); }catch(e){}
+    setTimeout(function(){
+      try{n.o.stop();}catch(e){}
+      try{n.o.disconnect();}catch(e){}
+      try{n.g.disconnect();}catch(e){}
+    }, 250);
+  });
+}
 
 function stopAllMusic(){
-  musicActive=false;
-  if(sw_beatT){ clearTimeout(sw_beatT); sw_beatT=null; }
-  sw_pad.forEach(function(n){ try{ n.gain.gain.setTargetAtTime(0.0001,AC.currentTime,0.3); setTimeout(function(){try{n.osc.stop();}catch(e){}},400); }catch(e){} });
-  sw_pad=[];
+  _musicTickId++;   // all running ticks see a stale id and exit
+  _killDrones();
 }
 
 function startTitleMusic(){
   if(!AC) return;
-  stopAllMusic(); musicActive=true;
-  // Slow ambient drone — two detuned saws + filter LFO
-  function makeDrone(freq, detune){
-    var o=AC.createOscillator(); var g=AC.createGain();
-    var f=AC.createBiquadFilter();
-    o.type='sawtooth'; o.frequency.value=freq; o.detune.value=detune||0;
-    f.type='lowpass'; f.frequency.value=600;
-    // Slowly modulate filter
-    var lfo=AC.createOscillator(); var lfoG=AC.createGain();
-    lfo.frequency.value=0.15; lfoG.gain.value=400;
-    lfo.connect(lfoG); lfoG.connect(f.frequency);
-    lfo.start();
-    g.gain.setValueAtTime(0.0001,AC.currentTime);
-    g.gain.linearRampToValueAtTime(0.12,AC.currentTime+3);
-    o.connect(f); f.connect(g); g.connect(musicGain);
-    o.start(); lfo.start();
-    sw_pad.push({osc:o,gain:g});
-    sw_pad.push({osc:lfo,gain:lfoG});
-  }
-  makeDrone(55,0); makeDrone(55,8); makeDrone(110,-5); makeDrone(82.5,3);
+  var myId = ++_musicTickId;
+  _killDrones();
+  setTimeout(function(){
+    if(_musicTickId !== myId) return;
+    if(AC.state==='suspended') AC.resume();
+    // Four detuned drone oscillators through a low-pass filter
+    [
+      {f:55,  dt:0},  {f:55,  dt:9},
+      {f:110, dt:-6}, {f:82,  dt:4}
+    ].forEach(function(d){
+      try{
+        var o = AC.createOscillator();
+        var flt = AC.createBiquadFilter();
+        var g = AC.createGain();
+        // LFO for filter sweep
+        var lfo = AC.createOscillator();
+        var lfoG = AC.createGain();
+        lfo.type='sine'; lfo.frequency.value=0.12; lfoG.gain.value=380;
+        lfo.connect(lfoG); lfoG.connect(flt.frequency);
+        o.type='sawtooth'; o.frequency.value=d.f; o.detune.value=d.dt;
+        flt.type='lowpass'; flt.frequency.value=580;
+        g.gain.setValueAtTime(0.0001, AC.currentTime);
+        g.gain.linearRampToValueAtTime(0.09, AC.currentTime+3);
+        o.connect(flt); flt.connect(g); g.connect(musicGain);
+        o.start(); lfo.start();
+        _droneNodes.push({o:o, g:g});
+        _droneNodes.push({o:lfo, g:lfoG});
+      }catch(e){}
+    });
+  }, 100);
 }
+
+var SW_BPM   = 120;
+var SW_BASS  = [33,31,36,29];
+var SW_CHORDS= [[45,52,57,60],[43,50,55,59],[48,55,60,63],[41,48,53,57]];
+var SW_LEAD  = [69,72,71,69,67,69,71,72];
 
 function startGameMusic(intensity){
   if(!AC) return;
-  stopAllMusic(); musicActive=true;
-  intensity=intensity||1;
-  var bps=SW_BPM/60;
-  var beatDur=1/bps;
-  sw_beat=0; sw_bar=0; sw_chord=0;
-
-  // ── Pad layer ──────────────────────────────────────────────────
-  function makePad(freq){
-    var o=AC.createOscillator(); var g=AC.createGain();
-    var f=AC.createBiquadFilter();
-    o.type='sawtooth'; o.frequency.value=freq;
-    f.type='lowpass'; f.frequency.value=800+intensity*400;
-    g.gain.setValueAtTime(0.0001,AC.currentTime);
-    g.gain.linearRampToValueAtTime(0.07,AC.currentTime+1.5);
-    o.connect(f); f.connect(g); g.connect(musicGain); o.start();
-    sw_pad.push({osc:o,gain:g});
-  }
-  SW_CHORDS[0].forEach(function(n){ makePad(440*Math.pow(2,(n-69)/12)*0.5); });
-
-  // ── Bass + drum sequencer ──────────────────────────────────────
-  function tick(){
-    if(!musicActive) return;
-    var t=AC.currentTime;
-    var beat=sw_beat%8;
-
-    // Kick on 0,4
-    if(beat===0||beat===4){
-      var ko=AC.createOscillator(); var kg=AC.createGain();
-      ko.type='sine'; ko.frequency.setValueAtTime(160,t); ko.frequency.exponentialRampToValueAtTime(40,t+0.08);
-      kg.gain.setValueAtTime(0.9,t); kg.gain.exponentialRampToValueAtTime(0.0001,t+0.2);
-      ko.connect(kg); kg.connect(musicGain); ko.start(t); ko.stop(t+0.25);
+  intensity = Math.min(intensity||1, 2);
+  var myId = ++_musicTickId;
+  _killDrones();
+  setTimeout(function(){
+    if(_musicTickId !== myId) return;
+    if(AC.state==='suspended') AC.resume();
+    var bps = SW_BPM/60, beatDur = 1/bps;
+    var beat=0, bar=0, chord=0;
+    // Pad drones
+    SW_CHORDS[0].forEach(function(n){
+      try{
+        var o = AC.createOscillator();
+        var flt = AC.createBiquadFilter();
+        var g = AC.createGain();
+        o.type='sawtooth'; o.frequency.value=440*Math.pow(2,(n-69)/12)*0.5;
+        flt.type='lowpass'; flt.frequency.value=700+intensity*350;
+        g.gain.setValueAtTime(0.0001, AC.currentTime);
+        g.gain.linearRampToValueAtTime(0.06, AC.currentTime+1.5);
+        o.connect(flt); flt.connect(g); g.connect(musicGain);
+        o.start();
+        _droneNodes.push({o:o, g:g});
+      }catch(e){}
+    });
+    function tick(){
+      if(_musicTickId !== myId) return;
+      var t = AC.currentTime;
+      var b = beat%8;
+      // Kick
+      if(b===0||b===4){ oscSweep(160,40,'sine',0.8,0.22,musicGain,t); }
+      // Snare
+      if(b===2||b===6){ noise(0.12,2800,0.22,musicGain,t); osc(200,'sine',0.18,0.1,musicGain,t); }
+      // Hi-hat
+      noise(b%2===0?0.035:0.09, 9000, b%2===0?0.07:0.11, musicGain, t);
+      // Bass
+      if(b===0||b===4){
+        var bf = 440*Math.pow(2,(SW_BASS[chord%4]-69)/12) * (b===4?1.5:1);
+        try{
+          var bo=AC.createOscillator(), bg=AC.createGain();
+          bo.type='square'; bo.frequency.value=bf;
+          bg.gain.setValueAtTime(0.0001,t); bg.gain.linearRampToValueAtTime(0.32,t+0.01);
+          bg.gain.setValueAtTime(0.32,t+beatDur*0.42); bg.gain.exponentialRampToValueAtTime(0.0001,t+beatDur*0.55);
+          bo.connect(bg); bg.connect(musicGain); bo.start(t); bo.stop(t+beatDur*0.6);
+        }catch(e){}
+      }
+      // Chord stab
+      if(b===0 && bar%2===0){
+        SW_CHORDS[chord%4].forEach(function(n,i){
+          try{
+            var so=AC.createOscillator(), sg=AC.createGain();
+            so.type='sawtooth'; so.frequency.value=440*Math.pow(2,(n-69)/12); so.detune.value=i%2?-6:6;
+            sg.gain.setValueAtTime(0.0001,t); sg.gain.linearRampToValueAtTime(0.07,t+0.02);
+            sg.gain.setValueAtTime(0.07,t+beatDur*1.7); sg.gain.exponentialRampToValueAtTime(0.0001,t+beatDur*2.1);
+            so.connect(sg); sg.connect(musicGain); so.start(t); so.stop(t+beatDur*2.2);
+          }catch(e){}
+        });
+      }
+      // Lead
+      if((bar%4===1||bar%4===3)&&(b===0||b===2||b===4||b===6)){
+        var li = ((bar%4)*4+Math.floor(b/2))%SW_LEAD.length;
+        var lf = 440*Math.pow(2,(SW_LEAD[li]-69)/12);
+        try{
+          var lo=AC.createOscillator(), lg=AC.createGain();
+          var lv=AC.createOscillator(), lvg=AC.createGain();
+          lo.type='square'; lo.frequency.value=lf;
+          lv.type='sine'; lv.frequency.value=5.5; lvg.gain.value=7;
+          lv.connect(lvg); lvg.connect(lo.frequency);
+          lg.gain.setValueAtTime(0.0001,t); lg.gain.linearRampToValueAtTime(0.11*intensity,t+0.02);
+          lg.gain.setValueAtTime(0.11*intensity,t+beatDur*0.55); lg.gain.exponentialRampToValueAtTime(0.0001,t+beatDur*0.85);
+          lo.connect(lg); lg.connect(musicGain);
+          lo.start(t); lv.start(t); lo.stop(t+beatDur); lv.stop(t+beatDur);
+        }catch(e){}
+      }
+      beat++;
+      if(beat%8===0){ bar++; if(bar%8===0) chord=(chord+1)%4; }
+      setTimeout(tick, beatDur*1000-6);
     }
-    // Snare on 2,6
-    if(beat===2||beat===6){ playNoise(0.12,2500,0.25,t); playTone(220,0.1,'sine',0.2,t); }
-    // Hi-hat every beat, open on offbeat
-    playNoise(beat%2===0?0.04:0.1, 8000, beat%2===0?0.08:0.12, t);
-
-    // Bass note — root on beat 0, fifth on beat 4
-    if(beat===0||beat===4){
-      var bassFreq=440*Math.pow(2,(SW_BASS[sw_chord%4]-69)/12);
-      if(beat===4) bassFreq*=1.5; // fifth
-      var bo=AC.createOscillator(); var bg=AC.createGain();
-      bo.type='square'; bo.frequency.value=bassFreq;
-      bg.gain.setValueAtTime(0.0001,t); bg.gain.linearRampToValueAtTime(0.35,t+0.01);
-      bg.gain.setValueAtTime(0.35,t+beatDur*0.45);
-      bg.gain.exponentialRampToValueAtTime(0.0001,t+beatDur*0.55);
-      bo.connect(bg); bg.connect(musicGain); bo.start(t); bo.stop(t+beatDur*0.6);
-    }
-
-    // Synth chord stab on beat 0 of every 2 bars
-    if(beat===0&&sw_bar%2===0){
-      var chord=SW_CHORDS[sw_chord%4];
-      chord.forEach(function(n,i){
-        var f2=440*Math.pow(2,(n-69)/12);
-        var so=AC.createOscillator(); var sg=AC.createGain();
-        so.type='sawtooth'; so.frequency.value=f2; so.detune.value=i%2===0?5:-5;
-        sg.gain.setValueAtTime(0.0001,t); sg.gain.linearRampToValueAtTime(0.08,t+0.02);
-        sg.gain.setValueAtTime(0.08,t+beatDur*1.8);
-        sg.gain.exponentialRampToValueAtTime(0.0001,t+beatDur*2.2);
-        so.connect(sg); sg.connect(musicGain); so.start(t); so.stop(t+beatDur*2.3);
-      });
-    }
-
-    // Lead melody — plays on beats 0,2 of bars 1,3
-    if((sw_bar%4===1||sw_bar%4===3)&&(beat===0||beat===2||beat===4||beat===6)){
-      var li=((sw_bar%4)*4+Math.floor(beat/2))%SW_LEAD.length;
-      var lf=440*Math.pow(2,(SW_LEAD[li]-69)/12);
-      var lo=AC.createOscillator(); var lg=AC.createGain();
-      lo.type='square'; lo.frequency.value=lf;
-      var lviblfo=AC.createOscillator(); var lvibg=AC.createGain();
-      lviblfo.frequency.value=5.5; lvibg.gain.value=8;
-      lviblfo.connect(lvibg); lvibg.connect(lo.frequency); lviblfo.start(t);
-      lg.gain.setValueAtTime(0.0001,t); lg.gain.linearRampToValueAtTime(0.12*intensity,t+0.02);
-      lg.gain.setValueAtTime(0.12*intensity,t+beatDur*0.6); lg.gain.exponentialRampToValueAtTime(0.0001,t+beatDur*0.9);
-      lo.connect(lg); lg.connect(musicGain); lo.start(t); lo.stop(t+beatDur);
-      lviblfo.stop(t+beatDur);
-    }
-
-    sw_beat++;
-    if(sw_beat%8===0){ sw_bar++; if(sw_bar%8===0){ sw_chord=(sw_chord+1)%4; } }
-
-    sw_beatT=setTimeout(tick, beatDur*1000-5);
-  }
-  tick();
+    tick();
+  }, 100);
 }
 
 function startShopMusic(){
   if(!AC) return;
-  stopAllMusic(); musicActive=true;
-  // Calm arpeggiated pad — slower, softer
-  var notes=[220,277,330,370,440,370,330,277];
-  var idx=0;
-  function arpTick(){
-    if(!musicActive) return;
-    var t=AC.currentTime;
-    var f=notes[idx%notes.length];
-    var o=AC.createOscillator(); var g=AC.createGain();
-    o.type='triangle'; o.frequency.value=f;
-    g.gain.setValueAtTime(0.08,t); g.gain.exponentialRampToValueAtTime(0.0001,t+0.6);
-    o.connect(g); g.connect(musicGain); o.start(t); o.stop(t+0.7);
-    idx++;
-    sw_beatT=setTimeout(arpTick, 260);
-  }
-  arpTick();
+  var myId = ++_musicTickId;
+  _killDrones();
+  setTimeout(function(){
+    if(_musicTickId !== myId) return;
+    var notes=[220,277,330,370,440,370,330,277], idx=0;
+    function arp(){
+      if(_musicTickId !== myId) return;
+      try{
+        var t=AC.currentTime, f=notes[idx%notes.length];
+        var o=AC.createOscillator(), g=AC.createGain();
+        o.type='triangle'; o.frequency.value=f;
+        g.gain.setValueAtTime(0.07,t); g.gain.exponentialRampToValueAtTime(0.0001,t+0.55);
+        o.connect(g); g.connect(musicGain); o.start(t); o.stop(t+0.65);
+      }catch(e){}
+      idx++;
+      setTimeout(arp, 265);
+    }
+    arp();
+  }, 100);
 }
 
-// ── Patch SFX into game events ─────────────────────────────────────────────
-var _origFireBullets; // hooked below after script loads
-var _lastSfxShoot=0;
-
+// ── Patch game events ────────────────────────────────────────────────────────
 function hookAudio(){
-  // Patch fireBullets to play shoot SFX
   var origFire=window.fireBullets;
   window.fireBullets=function(){
     origFire();
     if(G&&G.p&&AC){
       var now=AC.currentTime;
-      var throttle=G.p.wpn&&G.p.wpn.id==='beam'?0.12:0.05;
-      if(now-_lastSfxShoot>throttle){ sfxShoot(G.p.wpn&&G.p.wpn.id); _lastSfxShoot=now; }
+      var wpnId=G.p.wpn&&G.p.wpn.id;
+      var throttle=(wpnId==='beam')?0.14:0.06;
+      if(now-_sfxLastShoot>throttle){ sfxShoot(wpnId); _sfxLastShoot=now; }
     }
   };
-
-  // Patch takeDmg
   var origTake=window.takeDmg;
   window.takeDmg=function(d){
-    var shBefore=G&&G.p&&G.p.sh||0;
+    var shB=G&&G.p&&G.p.sh||0;
     origTake(d);
-    if(G&&G.p&&AC){
-      if(shBefore>0&&G.p.sh===0) sfxPlayerHit();
-      else if(shBefore>0) sfxShieldHit();
-      else sfxPlayerHit();
-    }
+    if(AC){ if(shB>0&&G.p.sh<shB) sfxShieldHit(); if(G.p.hp<(G&&G.p&&G.p.maxHp||100)-d) sfxPlayerHit(); }
   };
-
-  // Patch gainXP for level up
   var origXP=window.gainXP;
-  window.gainXP=function(a){
-    var lvBefore=G&&G.level||0;
-    origXP(a);
-    if(G&&G.level>lvBefore) sfxLevelUp();
-  };
-
-  // Patch openShop
+  window.gainXP=function(a){ var lv=G&&G.level||0; origXP(a); if(G&&G.level>lv) sfxLevelUp(); };
   var origShop=window.openShop;
-  window.openShop=function(){
-    origShop();
-    sfxShopOpen();
-    startShopMusic();
-  };
-
-  // Patch leaveShop
+  window.openShop=function(){ origShop(); sfxShopOpen(); startShopMusic(); };
   var origLeave=window.leaveShop;
-  window.leaveShop=function(){
-    origLeave();
-    sfxWaveStart();
-    startGameMusic(Math.min(2,(G&&G.wave||1)*0.12+0.9));
-  };
-
-  // Patch startGame
+  window.leaveShop=function(){ origLeave(); sfxWaveStart(); startGameMusic(Math.min(2,(G&&G.wave||1)*0.12+0.9)); };
   var origStart=window.startGame;
-  window.startGame=function(){
-    initAudio();
-    origStart();
-    sfxWaveStart();
-    startGameMusic(1);
-  };
-
-  // Patch resumeGame
+  window.startGame=function(){ initAudio(); origStart(); sfxWaveStart(); startGameMusic(1); };
   var origResume=window.resumeGame;
-  window.resumeGame=function(){
-    initAudio();
-    origResume();
-    startGameMusic(Math.min(2,(G&&G.wave||1)*0.12+0.9));
-  };
-
-  // Patch showGameOver
+  window.resumeGame=function(){ initAudio(); origResume(); startGameMusic(Math.min(2,(G&&G.wave||1)*0.12+0.9)); };
   var origGO=window.showGameOver;
-  window.showGameOver=function(){
-    origGO();
-    sfxGameOver();
-    startTitleMusic();
-  };
-
-  // Patch buyItem
+  window.showGameOver=function(){ origGO(); sfxGameOver(); startTitleMusic(); };
   var origBuy=window.buyItem;
-  window.buyItem=function(id){
-    origBuy(id);
-    sfxBuy();
-  };
-
-  // Patch activateEMP
+  window.buyItem=function(id){ origBuy(id); sfxBuy(); };
   var origEMP=window.activateEMP;
-  window.activateEMP=function(){
-    origEMP();
-    sfxEMP();
-  };
-
-  // Patch nukeAll
+  window.activateEMP=function(){ origEMP(); sfxEMP(); };
   var origNuke=window.nukeAll;
-  window.nukeAll=function(g){
-    origNuke(g);
-    sfxExplosion(true);
-  };
+  window.nukeAll=function(g){ origNuke(g); sfxExplosion(true); };
+  var origExplode=window.explode;
+  window.explode=function(x,y,col,big){ origExplode(x,y,col,big); sfxHit(big); };
 }
 
-// ── Patch explosion SFX into update loop via enemy death ──────────────────
-// Override explode() to also play sound
-var _origExplode=null;
-function patchExplode(){
-  var orig=window.explode;
-  window.explode=function(x,y,col,big){
-    orig(x,y,col,big);
-    sfxHit(big);
-  };
-}
-
-// ── Scrap pickup sound — patched via update scan ──────────────────────────
-var _scrapCount=0;
-function tickAudioSideEffects(){
-  if(!G||!AC) return;
-  // Count scraps to detect pickup
-  var cur=G.scrap||0;
-  if(cur>_scrapCount+5){ sfxScrap(); }
-  _scrapCount=cur;
-  // Mine explosion sounds handled by patching spark... too complex, use interval check
-  // Boss wave — boost intensity
-  requestAnimationFrame(tickAudioSideEffects);
-}
-
-// ── Init on first user interaction ────────────────────────────────────────
 var _audioReady=false;
+var _hooksApplied=false;
 function ensureAudio(){
   if(_audioReady) return;
   _audioReady=true;
   initAudio();
-  hookAudio();
-  patchExplode();
+  if(!_hooksApplied){ _hooksApplied=true; hookAudio(); }
   startTitleMusic();
-  tickAudioSideEffects();
   document.removeEventListener('click',ensureAudio);
   document.removeEventListener('touchstart',ensureAudio);
   document.removeEventListener('keydown',ensureAudio);
 }
-document.addEventListener('click',ensureAudio);
-document.addEventListener('touchstart',ensureAudio);
-document.addEventListener('keydown',ensureAudio);
+document.addEventListener('click',ensureAudio,{once:true});
+document.addEventListener('touchstart',ensureAudio,{once:true});
+document.addEventListener('keydown',ensureAudio,{once:true});
 </script>
 </body>
 </html>
