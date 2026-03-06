@@ -437,6 +437,43 @@ canvas{display:block;position:fixed;top:0;left:0;touch-action:none;}
   </div>
 </div>
 
+<!-- BUG REPORT MODAL -->
+<div id="bugreport-modal" style="display:none;position:fixed;inset:0;z-index:1100;background:rgba(3,6,15,.92);align-items:center;justify-content:center;">
+  <div style="display:flex;flex-direction:column;gap:12px;padding:28px 24px;background:rgba(0,0,0,.75);border:1px solid rgba(240,90,74,.35);border-radius:8px;min-width:260px;max-width:320px;width:90%;">
+    <div style="font-size:12px;letter-spacing:5px;color:#f05a4a;text-align:center;">🐛 BUG REPORT</div>
+    <div style="font-size:9px;letter-spacing:2px;color:rgba(255,255,255,.3);text-align:center;">TRANSMITTING TO GALACTIC COMMAND</div>
+
+    <div style="display:flex;flex-direction:column;gap:6px;">
+      <label style="font-size:9px;letter-spacing:2px;color:rgba(255,255,255,.45);">CATEGORY</label>
+      <select id="br-category" style="font-family:inherit;font-size:10px;letter-spacing:1px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.15);color:rgba(255,255,255,.8);padding:6px 8px;border-radius:3px;width:100%;">
+        <option value="gameplay">Gameplay / Balance</option>
+        <option value="visual">Visual / Rendering</option>
+        <option value="crash">Crash / Freeze</option>
+        <option value="audio">Audio</option>
+        <option value="ui">UI / Shop</option>
+        <option value="leaderboard">Leaderboard</option>
+        <option value="other">Other</option>
+      </select>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:6px;">
+      <label style="font-size:9px;letter-spacing:2px;color:rgba(255,255,255,.45);">DESCRIPTION <span style="color:#f05a4a;">*</span></label>
+      <textarea id="br-description" rows="4" maxlength="500" placeholder="What went wrong? What were you doing when it happened?"
+        style="font-family:inherit;font-size:10px;letter-spacing:.5px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.15);color:rgba(255,255,255,.85);padding:8px;border-radius:3px;resize:none;line-height:1.6;"></textarea>
+      <div id="br-charcount" style="font-size:8px;color:rgba(255,255,255,.2);text-align:right;">0 / 500</div>
+    </div>
+
+    <div id="br-context" style="font-size:9px;letter-spacing:1px;color:rgba(255,255,255,.2);padding:6px 8px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:3px;line-height:1.8;"></div>
+
+    <div id="br-status" style="font-size:9px;letter-spacing:2px;text-align:center;min-height:14px;"></div>
+
+    <div style="display:flex;gap:8px;">
+      <button class="btn-sm" onclick="closeBugReport()" style="flex:1;border-color:rgba(255,255,255,.2);color:rgba(255,255,255,.4);">CANCEL</button>
+      <button class="btn-sm" id="br-submit-btn" onclick="submitBugReport()" style="flex:1;border-color:#f05a4a;color:#f05a4a;">📡 TRANSMIT</button>
+    </div>
+  </div>
+</div>
+
 <!-- PAUSE MENU -->
 <div id="screen-pause" style="display:none;position:fixed;inset:0;z-index:200;background:rgba(3,6,15,.88);align-items:center;justify-content:center;flex-direction:column;">
   <div style="display:flex;flex-direction:column;align-items:center;gap:12px;padding:32px 28px;background:rgba(0,0,0,.65);border:1px solid rgba(74,240,196,.2);border-radius:8px;min-width:240px;max-width:300px;width:88%;">
@@ -464,6 +501,7 @@ canvas{display:block;position:fixed;top:0;left:0;touch-action:none;}
     </div>
     <div style="width:100%;border-top:1px solid rgba(255,255,255,.08);padding-top:10px;display:flex;flex-direction:column;gap:8px;">
       <button class="btn-sm" onclick="pauseToMenu()" style="width:100%;border-color:#f0c44a;color:#f0c44a;">🏠 MAIN MENU</button>
+      <button class="btn-sm" onclick="openBugReport()" style="width:100%;border-color:rgba(240,90,74,.5);color:rgba(240,90,74,.7);">🐛 REPORT BUG</button>
       <button class="btn-sm" onclick="pauseExitGame()" style="width:100%;border-color:#f05a4a;color:#f05a4a;">✕ EXIT GAME</button>
     </div>
   </div>
@@ -2608,6 +2646,89 @@ function buyItem(id){
   floatText(W/2, H/2, item.name + ' — AS KESSEL RUNS GO, THIS IS A GOOD ONE', '#4af0c4');
   buildShopGrid();
   document.getElementById('shopScrap').textContent = '⬡ ' + G.scrap + ' TIBANNA GAS';
+}
+
+// ═══════════════════════════════════════════════
+//  BUG REPORT
+// ═══════════════════════════════════════════════
+function openBugReport(){
+  var modal = document.getElementById('bugreport-modal');
+  var ctx   = document.getElementById('br-context');
+  var desc  = document.getElementById('br-description');
+  var status= document.getElementById('br-status');
+  var cc    = document.getElementById('br-charcount');
+  var btn   = document.getElementById('br-submit-btn');
+
+  // Auto-fill context snapshot
+  var wave  = G ? G.wave  : '—';
+  var score = G ? G.score : '—';
+  var kills = G ? G.kills : '—';
+  var wpn   = G && G.p && G.p.wpn ? G.p.wpn.name : '—';
+  var wpn2  = G && G.p && G.p.wpn2 ? G.p.wpn2.name : 'none';
+  var ua    = navigator.userAgent;
+  var isMob = /Mobi|Android/i.test(ua) ? 'Mobile' : 'Desktop';
+  var browser = (ua.match(/(Firefox|Chrome|Safari|Edge|OPR)\/[\d.]+/)||['Unknown'])[0];
+
+  ctx.innerHTML =
+    'WAVE ' + wave + ' &nbsp;|&nbsp; SCORE ' + (typeof score==='number'?score.toLocaleString():score) +
+    ' &nbsp;|&nbsp; KILLS ' + kills + '<br>' +
+    'WPN: ' + wpn + ' / ' + wpn2 + '<br>' +
+    browser + ' &nbsp;|&nbsp; ' + isMob + ' &nbsp;|&nbsp; v8.1';
+
+  desc.value = '';
+  status.textContent = '';
+  status.style.color = 'rgba(255,255,255,.3)';
+  btn.disabled = false;
+  btn.textContent = '📡 TRANSMIT';
+
+  // Char counter
+  desc.oninput = function(){ cc.textContent = desc.value.length + ' / 500'; };
+
+  modal.style.display = 'flex';
+}
+
+function closeBugReport(){
+  document.getElementById('bugreport-modal').style.display = 'none';
+}
+
+function submitBugReport(){
+  var desc   = document.getElementById('br-description').value.trim();
+  var cat    = document.getElementById('br-category').value;
+  var ctx    = document.getElementById('br-context').textContent;
+  var status = document.getElementById('br-status');
+  var btn    = document.getElementById('br-submit-btn');
+
+  if(!desc){
+    status.textContent = '⚠ DESCRIPTION REQUIRED';
+    status.style.color = '#f0c44a';
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'TRANSMITTING...';
+  status.textContent = '';
+
+  fetch(BIN_URL + '/bugreport', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ category: cat, description: desc, context: ctx })
+  })
+  .then(function(r){ return r.json(); })
+  .then(function(data){
+    if(data.ok){
+      status.textContent = '✅ REPORT TRANSMITTED — THANK YOU, PILOT';
+      status.style.color = '#4af0c4';
+      setTimeout(closeBugReport, 2200);
+    } else {
+      throw new Error(data.error||'unknown');
+    }
+  })
+  .catch(function(e){
+    status.textContent = '✗ COMMS FAILURE — TRY AGAIN';
+    status.style.color = '#f05a4a';
+    btn.disabled = false;
+    btn.textContent = '📡 TRANSMIT';
+  });
 }
 
 function endRunVoluntary(){
