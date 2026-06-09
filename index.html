@@ -6,6 +6,9 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#020812">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-192.png">
 <title>VOID RUNNER</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
@@ -20,30 +23,50 @@ body::before{content:'';position:fixed;inset:0;z-index:1;pointer-events:none;
   animation:scanDrift 8s linear infinite;}
 @keyframes scanDrift{from{background-position:0 0;}to{background-position:0 -80px;}}
 
-/* ---- HUD ---- */
-#hud{position:fixed;top:0;left:0;right:0;pointer-events:none;padding:8px 12px;display:none;justify-content:space-between;align-items:flex-start;gap:8px;z-index:10;
-  border-bottom:1px solid rgba(74,240,196,.1);background:rgba(2,8,18,.7);}
-.hud-col{display:flex;flex-direction:column;gap:4px;min-width:0;flex-shrink:1;}
-.hud-col.right{align-items:flex-end;flex-shrink:0;}
-.hud-col.mid{align-items:center;flex:1;min-width:0;}
+/* ---- HUD TOP BAR (score only) ---- */
+#hud{position:fixed;top:0;left:0;right:0;pointer-events:none;padding:6px 12px;display:none;justify-content:space-between;align-items:center;gap:8px;z-index:10;}
+.hud-col{display:flex;flex-direction:column;gap:3px;}
+.hud-col.right{align-items:flex-end;}
+.hud-col.mid{align-items:center;flex:1;}
+.score-v{font-size:20px;color:#4af0c4;letter-spacing:4px;text-shadow:0 0 16px rgba(74,240,196,.4);}
+.wave-v{font-size:8px;color:rgba(200,208,224,.25);letter-spacing:4px;}
+.wpn-v{font-size:10px;color:#f0c44a;letter-spacing:1px;}
+.perks-row{display:flex;gap:3px;flex-wrap:wrap;max-width:140px;justify-content:flex-end;}
+.ppip{width:18px;height:18px;background:rgba(74,240,196,.06);border:1px solid rgba(74,240,196,.2);border-radius:0;display:flex;align-items:center;justify-content:center;font-size:10px;}
+
+/* ---- HUD BOTTOM BAND ---- */
+#hud-bottom{position:fixed;bottom:0;left:0;right:0;pointer-events:none;z-index:15;display:none;
+  background:rgba(2,8,18,.82);border-top:1px solid rgba(74,240,196,.1);padding:5px 14px 6px;}
+#hud-bottom.active{display:block;}
+.hb-bars{display:flex;align-items:center;gap:10px;}
+.hb-bar-item{display:flex;align-items:center;gap:5px;}
+.hb-lbl{font-size:7px;letter-spacing:1px;color:rgba(74,240,196,.35);width:28px;text-align:right;}
+.hb-out{height:4px;border-radius:0;background:rgba(255,255,255,.08);overflow:hidden;}
+.hb-out.w80{width:80px;} .hb-out.w60{width:60px;}
+.hb-in{height:100%;border-radius:0;transition:width .1s;}
+.hb-hp .hb-in{background:#4af0c4;}
+.hb-sh .hb-in{background:#4a8af0;}
+.hb-xp .hb-in{background:#f0c44a;}
+.hb-en .hb-in{background:linear-gradient(90deg,#ff4444,#ff8844);transition:width .1s,background .3s;}
+.hb-val{font-size:7px;color:rgba(200,208,224,.4);min-width:28px;}
+/* Tibanna gas badge — compact, icon-pulse on earn */
+#hb-gas{font-size:11px;color:#a8ff78;letter-spacing:1px;margin-left:8px;transition:transform .15s,text-shadow .15s;}
+#hb-gas.pulse{transform:scale(1.35);text-shadow:0 0 12px #a8ff78;}
+/* Modifier label */
+#hb-modifier{font-size:7px;letter-spacing:2px;color:#f0c44a;opacity:0;transition:opacity .3s;margin-left:6px;}
+/* Bar row CSS kept for legacy references */
 .bar-row{display:flex;align-items:center;gap:6px;font-size:9px;letter-spacing:1px;}
 .bar-out{height:4px;border-radius:0;background:rgba(255,255,255,.08);overflow:hidden;}
-.bar-out.w120{width:120px;max-width:28vw;} .bar-out.w80{width:80px;max-width:20vw;}
+.bar-out.w120{width:120px;} .bar-out.w80{width:80px;}
 .bar-in{height:100%;border-radius:0;transition:width .1s;}
 .b-hp .bar-in{background:#4af0c4;}
 .b-sh .bar-in{background:#4a8af0;}
 .b-xp .bar-in{background:#f0c44a;}
 .hud-lbl{color:rgba(74,240,196,.4);width:44px;text-align:right;font-size:8px;letter-spacing:1px;}
 .hud-v{color:rgba(200,208,224,.5);font-size:8px;min-width:40px;}
-.score-v{font-size:16px;color:#4af0c4;letter-spacing:4px;}
-.wave-v{font-size:9px;color:rgba(200,208,224,.3);letter-spacing:4px;}
-.wpn-v{font-size:10px;color:#f0c44a;letter-spacing:1px;}
-.scrap-v{font-size:12px;color:#a8ff78;letter-spacing:1px;}
-.perks-row{display:flex;gap:3px;flex-wrap:wrap;max-width:140px;justify-content:flex-end;}
-.ppip{width:20px;height:20px;background:rgba(74,240,196,.06);border:1px solid rgba(74,240,196,.2);border-radius:0;display:flex;align-items:center;justify-content:center;font-size:11px;}
 
 /* ---- TOUCH CONTROLS ---- */
-#touch-ui{position:fixed;bottom:0;left:0;right:0;pointer-events:none;z-index:20;display:none;height:180px;}
+#touch-ui{position:fixed;bottom:38px;left:0;right:0;pointer-events:none;z-index:20;display:none;height:180px;}
 .joy-zone{position:absolute;bottom:20px;width:140px;height:140px;pointer-events:all;}
 #joy-left{left:20px;}
 #joy-right{right:20px;}
@@ -407,34 +430,58 @@ body::before{content:'';position:fixed;inset:0;z-index:1;pointer-events:none;
 
 <!-- HUD -->
 <div id="hud">
+  <!-- Left: weapon info -->
   <div class="hud-col">
-    <div class="bar-row b-hp"><span class="hud-lbl">HULL</span><div class="bar-out w120"><div class="bar-in" id="bHp"></div></div><span class="hud-v" id="vHp"></span></div>
-    <div id="cheat-btn" onclick="cheatPress()" style="width:120px;height:6px;margin-left:42px;cursor:pointer;pointer-events:all;background:transparent;border:none;padding:0;display:block;"></div>
-    <div class="bar-row b-sh"><span class="hud-lbl">SHIELD</span><div class="bar-out w120"><div class="bar-in" id="bSh"></div></div><span class="hud-v" id="vSh"></span></div>
-    <div class="bar-row b-xp"><span class="hud-lbl">XP</span><div class="bar-out w120"><div class="bar-in" id="bXp"></div></div><span class="hud-v" id="vLv"></span></div>
-    <div class="bar-row" id="energy-row" style="display:none;">
-      <span class="hud-lbl" id="stance-lbl" style="font-size:8px;letter-spacing:1px;color:#ff6666;">RED</span>
-      <div class="bar-out w120"><div class="bar-in" id="bEnergy" style="background:linear-gradient(90deg,#ff4444,#ff8844);transition:width .1s,background .3s;"></div></div>
-    </div>
-  </div>
-  <div class="hud-col mid">
-    <div class="wave-v" id="hWave">SECTOR 1</div>
-    <div id="hModifier" style="font-size:8px;letter-spacing:2px;color:#f0c44a;opacity:0;transition:opacity .3s;"></div>
-    <div class="score-v" id="hScore">0</div>
-    <div class="scrap-v" id="hScrap">⬡ 0 TIBANNA</div>
-  </div>
-  <div class="hud-col right">
-    <div style="display:flex;align-items:center;justify-content:flex-end;gap:8px;margin-bottom:3px;">
-      <div style="font-size:9px;letter-spacing:2px;color:rgba(255,255,255,.3);" id="hud-stance-label">WEAPONS</div>
-      <button id="btn-pause" onclick="togglePause()" style="background:none;border:1px solid rgba(255,255,255,.25);border-radius:3px;color:rgba(255,255,255,.5);font-family:inherit;font-size:11px;padding:2px 7px;cursor:pointer;pointer-events:all;line-height:1.4;letter-spacing:1px;">⏸</button>
+    <div style="display:flex;align-items:center;gap:6px;">
+      <div style="font-size:8px;letter-spacing:2px;color:rgba(255,255,255,.25);" id="hud-stance-label">WEAPONS</div>
     </div>
     <div class="wpn-v" id="hWpn" style="transition:color .2s;">TWIN ION CANNONS</div>
-    <div class="wpn-v" id="hWpn2" style="font-size:8px;color:rgba(255,255,255,.35);display:none;letter-spacing:2px;"></div>
     <div class="perks-row" id="hPerks"></div>
-    <div id="hud-pilot-passive" style="font-size:7px;letter-spacing:1px;color:rgba(255,255,255,.18);margin-top:1px;max-width:140px;line-height:1.3;text-align:right;"></div>
-    <div id="hud-streak" style="font-size:9px;letter-spacing:2px;color:#f0c44a;text-align:right;display:none;"></div>
+    <div id="hud-pilot-passive" style="font-size:7px;letter-spacing:1px;color:rgba(255,255,255,.15);margin-top:1px;max-width:140px;line-height:1.3;"></div>
+  </div>
+  <!-- Center: sector + score -->
+  <div class="hud-col mid">
+    <div class="wave-v" id="hWave">SECTOR 1</div>
+    <div class="score-v" id="hScore">0</div>
+    <div id="hud-streak" style="font-size:8px;letter-spacing:2px;color:#f0c44a;text-align:center;display:none;"></div>
+  </div>
+  <!-- Right: pause -->
+  <div class="hud-col right">
+    <button id="btn-pause" onclick="togglePause()" style="background:none;border:1px solid rgba(255,255,255,.2);border-radius:3px;color:rgba(255,255,255,.4);font-family:inherit;font-size:11px;padding:2px 7px;cursor:pointer;pointer-events:all;line-height:1.4;letter-spacing:1px;">⏸</button>
   </div>
 </div>
+
+<!-- HUD BOTTOM BAND — bars + gas badge -->
+<div id="hud-bottom">
+  <div class="hb-bars">
+    <div class="hb-bar-item hb-hp">
+      <span class="hb-lbl">HULL</span>
+      <div class="hb-out w80"><div class="hb-in" id="bHp"></div></div>
+      <span class="hb-val" id="vHp"></span>
+    </div>
+    <div id="cheat-btn" onclick="cheatPress()" style="width:1px;height:20px;cursor:pointer;pointer-events:all;background:transparent;border:none;padding:0;display:inline-block;"></div>
+    <div class="hb-bar-item hb-sh">
+      <span class="hb-lbl">SHLD</span>
+      <div class="hb-out w80"><div class="hb-in" id="bSh"></div></div>
+      <span class="hb-val" id="vSh"></span>
+    </div>
+    <div class="hb-bar-item hb-xp">
+      <span class="hb-lbl">XP</span>
+      <div class="hb-out w60"><div class="hb-in" id="bXp"></div></div>
+      <span class="hb-val" id="vLv"></span>
+    </div>
+    <div class="hb-bar-item hb-en" id="energy-row" style="display:none;">
+      <span class="hb-lbl" id="stance-lbl" style="font-size:7px;letter-spacing:1px;color:#ff6666;">RED</span>
+      <div class="hb-out w60"><div class="hb-in" id="bEnergy" style="background:linear-gradient(90deg,#ff4444,#ff8844);transition:width .1s,background .3s;"></div></div>
+    </div>
+    <div id="hb-gas">⬡ 0</div>
+    <div id="hb-modifier" style="font-size:7px;letter-spacing:2px;color:#f0c44a;opacity:0;transition:opacity .3s;margin-left:4px;"></div>
+    <div id="hModifier" style="display:none;"></div>
+  </div>
+</div>
+
+<!-- legacy hScrap element (keep for shop/JS references, hidden) -->
+<div id="hScrap" style="display:none;"></div>
 
 <!-- TOUCH UI -->
 <div id="touch-ui">
@@ -775,6 +822,22 @@ body::before{content:'';position:fixed;inset:0;z-index:1;pointer-events:none;
       </div>
     </div>
 
+    <!-- Cloud Sync -->
+    <div style="width:100%;border-top:1px solid rgba(255,255,255,.08);padding-top:12px;">
+      <div style="font-size:9px;letter-spacing:3px;color:rgba(255,255,255,.3);margin-bottom:8px;">☁ CLOUD SYNC</div>
+      <div style="font-size:8px;letter-spacing:1px;color:rgba(255,255,255,.25);line-height:1.7;margin-bottom:8px;">Sync your pilots across devices. Upload generates a code — enter it on another device to download.</div>
+      <div style="display:flex;gap:8px;margin-bottom:8px;">
+        <button class="btn-sm" onclick="cloudUpload()" style="flex:1;">⬆ UPLOAD</button>
+        <button class="btn-sm" onclick="cloudDownloadPrompt()" style="flex:1;">⬇ DOWNLOAD</button>
+      </div>
+      <div id="sync-code-row" style="display:none;align-items:center;justify-content:space-between;padding:8px 10px;border:1px solid rgba(74,240,196,.2);background:rgba(74,240,196,.04);margin-bottom:6px;">
+        <span style="font-size:8px;letter-spacing:2px;color:rgba(74,240,196,.4);">YOUR CODE</span>
+        <span id="sync-code-val" style="font-size:13px;letter-spacing:4px;color:#4af0c4;"></span>
+      </div>
+      <input id="sync-code-input" maxlength="8" placeholder="ENTER CODE" style="display:none;width:100%;font-family:inherit;font-size:12px;letter-spacing:4px;text-align:center;background:rgba(255,255,255,.06);border:1px solid rgba(74,240,196,.3);color:#4af0c4;padding:8px;box-sizing:border-box;margin-bottom:6px;text-transform:uppercase;">
+      <div id="sync-status" style="font-size:8px;letter-spacing:2px;text-align:center;min-height:12px;color:rgba(255,255,255,.4);"></div>
+    </div>
+
     <!-- Controls hint -->
     <div style="width:100%;border-top:1px solid rgba(255,255,255,.08);padding-top:12px;">
       <div style="font-size:9px;letter-spacing:3px;color:rgba(255,255,255,.3);margin-bottom:8px;">CONTROLS</div>
@@ -791,9 +854,26 @@ body::before{content:'';position:fixed;inset:0;z-index:1;pointer-events:none;
   <div style="padding:40px 20px 32px;display:flex;flex-direction:column;align-items:center;gap:0;max-width:440px;margin:0 auto;width:100%;">
     <div style="font-size:13px;letter-spacing:6px;color:#4af0c4;margin-bottom:18px;">📋 PATCH NOTES</div>
 
+    <!-- v12.3 -->
+    <div style="width:100%;margin-bottom:16px;">
+      <div style="font-size:10px;letter-spacing:3px;color:#f0c44a;margin-bottom:6px;border-bottom:1px solid rgba(240,196,74,.2);padding-bottom:4px;">v12.4 — CLOUD &amp; PWA — CURRENT</div>
+      <div class="pn-entry">☁ <b>Cloud Sync</b> — Settings → Cloud Sync. Upload your pilots, get an 8-character code, enter it on another device to bring them across.</div>
+      <div class="pn-entry">📲 <b>Install as app</b> — Void Runner is now a PWA. "Add to Home Screen" gives you fullscreen play and offline support.</div>
+      <div class="pn-entry">🟣 <b>Phantom buff</b> — Gravity Ring orbit radius 75→85, gravity pull 130→160. The kill zone now sits safely outside enemy contact range.</div>
+      <div class="pn-entry">⬡ <b>Tibanna Magnet fix</b> — the gas multiplier now applies to every pickup, not just end-of-wave auto-collect.</div>
+    </div>
+
+    <!-- v12.3 -->
+    <div style="width:100%;margin-bottom:16px;">
+      <div style="font-size:10px;letter-spacing:3px;color:rgba(255,255,255,.5);margin-bottom:6px;border-bottom:1px solid rgba(255,255,255,.08);padding-bottom:4px;">v12.3 — HUD DECLUTTER</div>
+      <div class="pn-entry">🧹 <b>HUD redesigned</b> — top bar is now score + sector only. Hull, shield, XP and energy bars moved to a slim status band at the bottom of the screen.</div>
+      <div class="pn-entry">⬡ <b>Tibanna floats removed</b> — no more "+2 TIBANNA" text spam mid-screen. The gas counter in the bottom band pulses green every time you collect.</div>
+      <div class="pn-entry">📱 <b>Mobile layout</b> — touch controls lifted above the new status band. Less overlap, cleaner combat view.</div>
+    </div>
+
     <!-- v8.2 -->
     <div style="width:100%;margin-bottom:16px;">
-      <div style="font-size:10px;letter-spacing:3px;color:#f0c44a;margin-bottom:6px;border-bottom:1px solid rgba(240,196,74,.2);padding-bottom:4px;">v9.1 — CURRENT</div>
+      <div style="font-size:10px;letter-spacing:3px;color:rgba(255,255,255,.5);margin-bottom:6px;border-bottom:1px solid rgba(255,255,255,.08);padding-bottom:4px;">v9.1 — STANCE SYSTEM</div>
       <div class="pn-entry">⚔️ <b>Stance System</b> — choose a Loadout at run start. Each has a Red (attack) and Blue (control) weapon. Toggle mid-combat with F/Shift or the mobile Stance button. Red drains energy; Blue recharges it.</div>
       <div class="pn-entry">🎯 <b>Four Loadouts</b> — RAIDER (twin cannons + strafe burst), SENTINEL (pierce rifle + shield pulse), WARDEN (homing torpedo + siege mines), PHANTOM (sustained beam + gravity orbital).</div>
       <div class="pn-entry">💣 <b>Warden reworked</b> — Red stance now fires a tracking Proton Torpedo. Blue stance deploys a Siege Array: 3 proximity mines in formation, each triggering a 3-stage cluster detonation. Upgrades to 4 and 8 mines.</div>
@@ -1171,6 +1251,13 @@ function resize(){
 resize();
 window.addEventListener('resize', resize);
 
+// ── PWA: register service worker (no-op if sw.js absent or unsupported) ──
+if('serviceWorker' in navigator){
+  window.addEventListener('load', function(){
+    navigator.serviceWorker.register('sw.js').catch(function(){ /* not deployed — fine */ });
+  });
+}
+
 // ═══════════════════════════════════════════════
 //  GLOBAL STATE: Pilots & Achievements
 // ═══════════════════════════════════════════════
@@ -1225,6 +1312,52 @@ function loadPilotsFromStorage(){
 }
 function savePilotsToStorage(){
   localStorage.setItem('voidRunnerPilots',JSON.stringify(allPilots));
+}
+
+// ═══════════════════════════════════════════════
+//  CLOUD SYNC (pilot profiles ↔ Worker D1)
+// ═══════════════════════════════════════════════
+function _syncStatus(msg,col){ var el=document.getElementById('sync-status'); if(el){ el.textContent=msg; el.style.color=col||'rgba(255,255,255,.4)'; } }
+function cloudUpload(){
+  if(!allPilots || !allPilots.length){ _syncStatus('NO PILOTS TO UPLOAD','#f05a4a'); return; }
+  _syncStatus('UPLOADING...');
+  var existingCode = localStorage.getItem('vrSyncCode') || '';
+  fetch(BIN_URL+'/sync',{
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({ code:existingCode, blob:{ pilots:allPilots, savedAt:new Date().toISOString() } })
+  }).then(function(r){ return r.json(); }).then(function(d){
+    if(d && d.ok && d.code){
+      localStorage.setItem('vrSyncCode', d.code);
+      var row=document.getElementById('sync-code-row'), val=document.getElementById('sync-code-val');
+      if(row&&val){ row.style.display='flex'; val.textContent=d.code; }
+      _syncStatus('UPLOADED — SAVE THIS CODE','#a8ff78');
+    } else _syncStatus('UPLOAD FAILED'+(d&&d.error?' — '+d.error:''),'#f05a4a');
+  }).catch(function(){ _syncStatus('NETWORK ERROR','#f05a4a'); });
+}
+function cloudDownloadPrompt(){
+  var inp=document.getElementById('sync-code-input');
+  if(!inp) return;
+  if(inp.style.display==='none'||!inp.style.display){
+    inp.style.display='block'; inp.focus();
+    _syncStatus('ENTER CODE, THEN TAP DOWNLOAD AGAIN');
+    return;
+  }
+  var code=(inp.value||'').toUpperCase().replace(/[^A-Z2-9]/g,'');
+  if(code.length!==8){ _syncStatus('CODE MUST BE 8 CHARACTERS','#f05a4a'); return; }
+  _syncStatus('DOWNLOADING...');
+  fetch(BIN_URL+'/sync/'+code).then(function(r){ return r.json(); }).then(function(d){
+    if(d && d.ok && d.blob && d.blob.pilots && d.blob.pilots.length){
+      // Merge: incoming pilots win on id collision (cloud is source of truth)
+      var byId={};
+      allPilots.forEach(function(p){ byId[p.id]=p; });
+      d.blob.pilots.forEach(function(p){ byId[p.id]=p; });
+      allPilots=Object.keys(byId).map(function(k){ return byId[k]; });
+      savePilotsToStorage();
+      localStorage.setItem('vrSyncCode', code);
+      _syncStatus('DOWNLOADED '+d.blob.pilots.length+' PILOT(S) — MERGED','#a8ff78');
+      if(typeof initSaveUI==='function') initSaveUI();
+    } else _syncStatus(d&&d.error?d.error.toUpperCase():'NOTHING FOUND','#f05a4a');
+  }).catch(function(){ _syncStatus('NETWORK ERROR','#f05a4a'); });
 }
 function createNewPilot(name){
   // Sanitize name - remove any HTML/script tags
@@ -1412,7 +1545,7 @@ const WEAPONS = [
   // ── ORBITAL (projectiles orbit player, new) ───────────────────────
   {id:'pls1', name:'SHOCKWAVE EMITTER',     col:'#40e0ff', gl:'rgba(64,224,255,.8)', spd:0, dmg:18, fr:1.4, cnt:0, sp:0, pulse:true, pulseRad:110, pulseForce:280, w:0},
   {id:'pls2', name:'NOVA PULSE CANNON',     col:'#00cfff', gl:'rgba(0,207,255,.9)',  spd:0, dmg:32, fr:0.9, cnt:0, sp:0, pulse:true, pulseRad:150, pulseForce:400, w:0},
-  {id:'orb1', name:'GRAVITY RING MK1',      col:'#c080ff', gl:'rgba(192,128,255,.7)',spd:0, dmg:55,  fr:99, cnt:0, sp:0, orbital:2, orbRad:75,  orbSpd:4.0, w:14, orbPull:130},
+  {id:'orb1', name:'GRAVITY RING MK1',      col:'#c080ff', gl:'rgba(192,128,255,.7)',spd:0, dmg:55,  fr:99, cnt:0, sp:0, orbital:2, orbRad:85,  orbSpd:4.0, w:14, orbPull:160},
   {id:'orb2', name:'GRAVITY RING MK2',      col:'#b060ff', gl:'rgba(176,96,255,.7)', spd:0, dmg:85,  fr:99, cnt:0, sp:0, orbital:3, orbRad:82,  orbSpd:5.0, w:16, orbPull:150},
   {id:'orb3', name:'SINGULARITY FIELD',     col:'#9040ff', gl:'rgba(144,64,255,.9)', spd:0, dmg:130, fr:99, cnt:0, sp:0, orbital:5, orbRad:90,  orbSpd:6.5, w:18, orbPull:180},
   // ── NEW v8.0 WEAPONS ──────────────────────────────────────
@@ -1511,7 +1644,7 @@ const LOADOUTS = {
     tagline: 'Passive predator',
     desc: 'Red: Sustained beam melts targets — Blue: Gravity ring orbits and crushes',
     red: {id:'beam',name:'SUSTAINED BEAM',      col:'#ffff50', gl:'rgba(255,255,80,.7)',  spd:900, dmg:7,  fr:0.04, cnt:1, sp:0,    w:3, beam:true},
-    blue:{id:'orb1',name:'GRAVITY RING',         col:'#c080ff', gl:'rgba(192,128,255,.7)',spd:0,   dmg:55, fr:99,   cnt:0, sp:0,    w:0, orbital:2, orbRad:75, orbSpd:4.0, orbPull:130},
+    blue:{id:'orb1',name:'GRAVITY RING',         col:'#c080ff', gl:'rgba(192,128,255,.7)',spd:0,   dmg:55, fr:99,   cnt:0, sp:0,    w:0, orbital:2, orbRad:85, orbSpd:4.0, orbPull:160},
     redUpgrades:  ['rp2','vr','bfork','arc'],
     blueUpgrades: ['orb2','orb3','ganc','mdet'],
   },
@@ -2158,6 +2291,17 @@ function floatText(x,y,txt,col='#fff'){
   floaters.push({x,y,txt,col,life:1.2,vy:-55});
 }
 
+var _gasTO=null;
+function pulseGas(){
+  if(!G) return;
+  var el=document.getElementById('hb-gas');
+  if(!el) return;
+  el.textContent='⬡ '+G.scrap;
+  el.classList.add('pulse');
+  if(_gasTO) clearTimeout(_gasTO);
+  _gasTO=setTimeout(function(){ el.classList.remove('pulse'); },220);
+}
+
 // ═══════════════════════════════════════════════
 //  GAME INIT
 // ═══════════════════════════════════════════════
@@ -2205,7 +2349,7 @@ function createPlayer(loadoutId){
 //  JSONBIN LEADERBOARD
 // ═══════════════════════════════════════════════
 var BIN_URL      = 'https://void-runner-lb.cobyhun.workers.dev';
-var GAME_VERSION = 'v12.3';
+var GAME_VERSION = 'v12.4';
 
 // ── Ship skin selector ────────────────────────────────────────────────────────
 var SKIN_ORDER = ['viper','xwing','raptor'];
@@ -2366,8 +2510,8 @@ function validateScore(entry){
   // Score per wave — late game elites + bosses can push well above 3000/wave
   if(score > wave * 15000) return false;
 
-  // Kills per wave — killscreen (wave 50) is infinite, kills are uncapped there
-  if(wave < 50 && kills > wave * 150) return false;
+  // Kills per wave — carriers spawn TIEs, late waves legitimately hit 100+ kills/wave cumulative
+  if(kills > wave * 150) return false;
 
   // Minimum time — at least 8 seconds per wave
   if(time < wave * 8) return false;
@@ -2375,8 +2519,8 @@ function validateScore(entry){
   // Score:kills ratio — cap at 2000 per kill (boss kills skew this high)
   if(kills > 0 && score / kills > 2000) return false;
 
-  // Name sanity — callsign format is "NAME · SHIP · LOADOUT", up to 40 chars
-  if(!entry.name || entry.name.length > 40) return false;
+  // Name sanity
+  if(!entry.name || entry.name.length > 20) return false;
 
   return true;
 }
@@ -2577,7 +2721,7 @@ function resumeGame(){
   shopSold = new Set(snap.shopSold || []);
   shopBuyCounts = snap.shopBuyCounts || {};
   showScreen(null);
-  document.getElementById('hud').style.display='flex';
+  document.getElementById('hud').style.display='flex'; document.getElementById('hud-bottom').classList.add('active');
   initStars(); particles=[]; floaters=[];
   var wpn = WEAPONS.find(function(w){ return w.id===snap.p.wpnId; }) || WEAPONS[0];
   var _ldId = snap.loadoutId||snap.p.loadoutId||'raider';
@@ -2869,7 +3013,7 @@ function startGame(loadoutId, _opts){
   shopBuyCounts = {};
   rerollCost = 5;
   showScreen(null);
-  document.getElementById('hud').style.display='flex';
+  document.getElementById('hud').style.display='flex'; document.getElementById('hud-bottom').classList.add('active');
   initStars(); particles=[]; floaters=[];
   
   // Initialize current run tracking
@@ -2936,26 +3080,15 @@ function startGame(loadoutId, _opts){
 // ═══════════════════════════════════════════════
 //  WAVE SPAWNING
 // ═══════════════════════════════════════════════
-// Boss scaling: base stats grow with each boss encounter (w=10,20,30...)
-// Beyond wave 30 each subsequent boss is meaningfully harder
+// Boss tier by wave: wave 10=tier1, wave 20=tier2, wave 30+=tier3
 function getBossDef(w){
   var b = JSON.parse(JSON.stringify(ENEMY_DEF[7])); // basestar template
-  if(w>=40){
-    var extra = Math.floor((w-40)/10);
-    b.hp  = Math.round(3200 * Math.pow(1.30, extra));
-    b.spd = Math.min(75, 65 + extra*3);
-    b.sz=46; b.sc=1800; b.bd=Math.round(42 * Math.pow(1.12, extra));
-    b.col='#ff00ff'; b.fr=0.5;
-    b.bossPhaseLabel='VOID OVERSEER';
-    b.bs = Math.round(ENEMY_DEF[7].bs * (1.6 + extra*0.1));
-  } else if(w>=30){
-    b.hp=2400; b.spd=62; b.sz=44; b.sc=1200; b.bd=36; b.col='#cc00ff'; b.fr=0.6;
+  if(w>=30){
+    b.hp=1800; b.spd=55; b.sz=42; b.sc=900; b.bd=30; b.col='#cc00ff';
     b.bossPhaseLabel='CORRUPTED OVERMIND';
-    b.bs = Math.round(ENEMY_DEF[7].bs * 1.5);
   } else if(w>=20){
-    b.hp=1500; b.spd=52; b.sz=40; b.sc=700; b.bd=30; b.col='#ff4400'; b.fr=0.65;
+    b.hp=1100; b.spd=48; b.sz=38; b.sc=600; b.bd=26; b.col='#ff4400';
     b.bossPhaseLabel='CYLON COMMAND SHIP';
-    b.bs = Math.round(ENEMY_DEF[7].bs * 1.3);
   } else {
     b.hp=600;  b.spd=42; b.sz=34; b.sc=300; b.bd=22; b.col='#ff2244';
     b.bossPhaseLabel='CYLON BASESTAR';
@@ -2963,115 +3096,14 @@ function getBossDef(w){
   return b;
 }
 
-// ═══════════════════════════════════════════════
-//  KILLSCREEN — Wave 50+, infinite escalating siege
-// ═══════════════════════════════════════════════
-function spawnKillscreenPhase(){
-  if(!G.killscreen) G.killscreen = { phase:0, phaseKills:0, totalKills:0 };
-  var ks = G.killscreen;
-  ks.phase++;
-  ks.phaseKills = 0;
-  G.waveActive = true;
-  G.waveSpawned = 0;
-  G.countdownDone = true; // skip countdown re-trigger
-  G.spawnList = [];
-  G.spawnInterval = 0.06; // very fast
-
-  var bossA = getBossDef(50); // max tier boss stats
-  var bossB = JSON.parse(JSON.stringify(bossA));
-  var bossC = JSON.parse(JSON.stringify(bossA));
-
-  if(ks.phase === 1){
-    // Phase 1: One boss. Ominous.
-    bossA.bossPhaseLabel = 'THE LAST STAND — PHASE I';
-    G.spawnList.push(bossA);
-    for(var i=0;i<6;i++) G.spawnList.push(ENEMY_DEF[6]); // destroyer escort
-    announce('☠ THE VOID AWAKENS — LAST STAND');
-  } else if(ks.phase === 2){
-    // Phase 2: Three bosses simultaneously
-    bossA.bossPhaseLabel='OVERMIND ALPHA'; bossA.col='#ff2244';
-    bossB.bossPhaseLabel='OVERMIND BETA';  bossB.col='#ff8800'; bossB.hp=Math.round(bossB.hp*1.2);
-    bossC.bossPhaseLabel='OVERMIND GAMMA'; bossC.col='#cc00ff'; bossC.hp=Math.round(bossC.hp*1.5);
-    G.spawnList.push(bossA, bossB, bossC);
-    for(var i=0;i<12;i++) G.spawnList.push(ENEMY_DEF[rInt(4,6)]);
-    announce('☠ THREE BECOME ONE — PHASE II');
-  } else if(ks.phase === 3){
-    // Phase 3: Nine bosses, staggered in 3 groups of 3
-    for(var g=0;g<3;g++){
-      for(var b=0;b<3;b++){
-        var bd = JSON.parse(JSON.stringify(ENEMY_DEF[7]));
-        bd.hp=Math.round(bossA.hp * (0.8 + g*0.3 + b*0.1));
-        bd.spd=bossA.spd; bd.bd=bossA.bd; bd.sz=bossA.sz;
-        bd.bs=bossA.bs; bd.isBoss=true; bd.tier=4;
-        bd.col=['#ff2244','#ff8800','#cc00ff'][g];
-        bd.bossPhaseLabel='LEGION '+(g*3+b+1);
-        G.spawnList.push(bd);
-      }
-    }
-    for(var i=0;i<20;i++) G.spawnList.push(ENEMY_DEF[rInt(3,6)]);
-    announce('☠ THE NINE — PHASE III');
-    shake(20);
-  } else {
-    // Phase 4+: Pure endless swarm. No mercy.
-    var extraPhase = ks.phase - 4;
-    // Spam carriers and destroyers with escalating HP
-    var hpBoost = Math.pow(1.15, extraPhase);
-    for(var i=0;i<4;i++){
-      var c = JSON.parse(JSON.stringify(ENEMY_DEF[5])); // carrier
-      c.hp = Math.round(c.hp * 6 * hpBoost);
-      c.spd = Math.min(c.spd * 1.5, c.spd * 2);
-      c.bd  = Math.round(c.bd * 2 * hpBoost);
-      G.spawnList.push(c);
-    }
-    for(var i=0;i<8;i++){
-      var d = JSON.parse(JSON.stringify(ENEMY_DEF[6])); // destroyer
-      d.hp = Math.round(d.hp * 5 * hpBoost);
-      d.bd = Math.round(d.bd * 2 * hpBoost);
-      G.spawnList.push(d);
-    }
-    // Boss mixed in from phase 5+
-    if(ks.phase >= 5){
-      var mb = getBossDef(50);
-      mb.hp = Math.round(mb.hp * hpBoost);
-      mb.bossPhaseLabel = 'VOID ARBITER';
-      G.spawnList.push(mb);
-    }
-    for(var i=0;i<30+(extraPhase*5);i++) G.spawnList.push(ENEMY_DEF[pool4[rInt(0,pool4.length-1)]]);
-    announce('☠ PHASE '+(ks.phase)+' — NO ESCAPE');
-    if(extraPhase % 2 === 0) shake(16);
-  }
-}
-var pool4 = [2,3,4,5,5,6,6,6]; // heavy-biased pool for phase 4+
-
-
-
 function spawnWave(){
   const w = G.wave;
-  // Wave 50+: killscreen — never goes to shop, escalating siege
-  if(w >= 50){
-    if(w === 50 && !G.killscreen){
-      // First time entering killscreen
-      G.killscreen = null; // will be init'd in spawnKillscreenPhase
-      // Big dramatic announcement
-      announce('☠ ☠ KILLSCREEN — WAVE 50 ☠ ☠');
-      shake(25);
-      // Override HUD wave display
-      setTimeout(function(){
-        var hw=document.getElementById('hWave'); if(hw) hw.textContent='☠ KILLSCREEN';
-        hw.style.color='#ff2244';
-      }, 100);
-    }
-    spawnKillscreenPhase();
-    return;
-  }
   G.waveActive = true;
   G.waveSpawned = 0;
   G.spawnList = [];
   G.spawnInterval = G.wave <= 10
     ? Math.max(0.25, 0.8 - G.wave * 0.03)
-    : G.wave <= 20
-    ? Math.max(0.10, 0.50 - (G.wave - 10) * 0.03)
-    : Math.max(0.07, 0.20 - (G.wave - 20) * 0.01);
+    : Math.max(0.12, 0.5 - (G.wave - 10) * 0.02);
   G.spawnTimer = 0;
   G.killStreak = 0;
   // v11: reset per-wave pilot/perk effects
@@ -3095,7 +3127,7 @@ function spawnWave(){
     announce('⚠ ⚠ BOSS INCOMING — WAVE ' + w + ' ⚠ ⚠');
     shake(12);
     G.spawnList.push(getBossDef(w));
-    const escort = w>=30 ? 16 : w>=20 ? 12 : 4;
+    const escort = w>=20 ? 8 : 4;
     for(let i=0;i<escort;i++) G.spawnList.push(ENEMY_DEF[rInt(0,1)]);
     if(w>=20) G.spawnList.push(ENEMY_DEF[5]);
   } else {
@@ -3110,26 +3142,17 @@ function spawnWave(){
     } else {
       announce(isMiniBoss ? '⚠ ELITE CONTACT — WAVE ' + w : 'CYLON CONTACT — WAVE ' + w);
     }
-    // Count: ramps faster past wave 10, hard past wave 20
-    const count = w <= 10 ? 7 + (w - 1) * 2
-                : w <= 20 ? 25 + (w - 10) * 3
-                :           55 + (w - 20) * 4;
+    const count = 7 + (w - 1) * 2;
     // Pool unlocks: 0=tie,1=raider,2=bomber,3=gunship,4=interceptor,5=carrier,6=destro
-    // Late-game pools are carrier/destroyer heavy
     const pool = w<=1  ? [0]
                : w<=2  ? [0,1]
                : w<=4  ? [0,1,2]
                : w<=6  ? [0,1,2,3]
                : w<=9  ? [0,1,2,3,4]
                : w<=14 ? [0,1,2,3,4,5]
-               : w<=19 ? [1,2,3,4,5,5,6,6]       // carriers and destroyers weighted up
-               :         [2,3,4,5,5,5,6,6,6];    // wave 20+: mostly heavies
+               :         [0,1,2,3,4,5,6];
     if(isMiniBoss) G.spawnList.push(ENEMY_DEF[6]); // elite destroyer
     if(w>=5 && w%3===0) G.spawnList.push(ENEMY_DEF[6]); // bonus elites from w5
-    // Extra pressure: force carriers from wave 15, extra destroyers from wave 20
-    if(w>=15) G.spawnList.push(ENEMY_DEF[5]); // forced carrier
-    if(w>=20){ G.spawnList.push(ENEMY_DEF[5]); G.spawnList.push(ENEMY_DEF[6]); }
-    if(w>=25){ G.spawnList.push(ENEMY_DEF[5]); G.spawnList.push(ENEMY_DEF[6]); G.spawnList.push(ENEMY_DEF[6]); }
     for(let i=0;i<count;i++) G.spawnList.push(ENEMY_DEF[pool[rInt(0,pool.length-1)]]);
     // v12: apply modifier transform (may shrink/grow/mutate spawn list)
     if(G.waveModifier) G.spawnList = G.waveModifier.apply(G.spawnList);
@@ -3146,36 +3169,23 @@ function spawnOneEnemy(def){
   else if(side===2){ x=0; y=rand(pad, H-pad); }
   else              { x=W; y=rand(pad, H-pad); }
 
-  // HP/damage/speed/bullet-speed scaling
-  // Waves 1-10: gentle warmup. Wave 11-20: serious ramp. Wave 21+: brutal.
+  // HP/damage/speed scaling — steeper compound after wave 10
   var _w = G.wave;
-  var sc, dmgSc, spdSc, bsSc;
+  var sc, dmgSc, spdSc;
   if(_w <= 10){
     sc    = Math.pow(1.10, _w - 1);
     dmgSc = 1 + (_w-1)*0.05;
     spdSc = Math.pow(1.03, _w - 1);
-    bsSc  = 1;
-  } else if(_w <= 20){
+  } else {
+    // Base at wave 10 × steeper compounding for waves beyond
     var base10hp  = Math.pow(1.10, 9);
     var base10dmg = 1 + 9*0.05;
     var base10spd = Math.pow(1.03, 9);
-    sc    = base10hp  * Math.pow(1.18, _w - 10);
-    dmgSc = base10dmg + (_w-10)*0.10;
-    spdSc = base10spd * Math.pow(1.05, _w - 10);
-    bsSc  = 1 + (_w-10)*0.06;
-  } else {
-    var base10hp2  = Math.pow(1.10, 9);
-    var base20hp   = base10hp2 * Math.pow(1.18, 10);
-    var base10dmg2 = 1 + 9*0.05;
-    var base20dmg  = base10dmg2 + 10*0.10;
-    var base10spd2 = Math.pow(1.03, 9);
-    var base20spd  = base10spd2 * Math.pow(1.05, 10);
-    sc    = base20hp  * Math.pow(1.22, _w - 20);
-    dmgSc = base20dmg + (_w-20)*0.15;
-    spdSc = base20spd * Math.pow(1.07, _w - 20);
-    bsSc  = 1.6 + (_w-20)*0.10;
+    sc    = base10hp  * Math.pow(1.15, _w - 10);
+    dmgSc = base10dmg + (_w-10)*0.08;
+    spdSc = base10spd * Math.pow(1.04, _w - 10);
   }
-  const baseSpd = Math.min(def.spd * (spdSc||1), def.spd * 4.5);
+  const baseSpd = Math.min(def.spd * (spdSc||1), def.spd * 3.5); // raised cap from 2.5 to 3.5
   // v12: apply wave modifier HP multiplier from the def itself (set by modifier.apply)
   var _hpMult = (def._modHpMult||1.0);
   var _baseHp = Math.floor(def.hp * sc * _hpMult);
@@ -3190,7 +3200,7 @@ function spawnOneEnemy(def){
     sc: def.sc,
     fr: def.fr,
     fT: rand(0.5, def.fr+0.5),
-    bs: Math.round(def.bs * (bsSc||1)),
+    bs: def.bs,
     bd: Math.floor(def.bd*dmgSc),
     rng: def.rng,
     type: def.type||'tie',
@@ -3732,10 +3742,7 @@ function update(dt){
       // v11: time warp perk
       if(p.timeWarpPerk){
         p.timeWarpKillCount=(p.timeWarpKillCount||0)+1;
-        var _twNow=performance.now()/1000;
-        var _twReady=!p.timeWarpLastTrigger||(_twNow-p.timeWarpLastTrigger)>=8;
-        if(p.timeWarpKillCount%10===0 && _twReady){
-          p.timeWarpLastTrigger=_twNow;
+        if(p.timeWarpKillCount%10===0){
           G.enemies.forEach(function(e2){ e2.stunned=(e2.stunned||0)+2; });
           announce('⏱ TIME WARP — ENEMIES FROZEN');
           spark(p.x,p.y,'#88ffff',16,1.2);
@@ -3859,7 +3866,7 @@ function update(dt){
     s.x+=s.vx*dt; s.y+=s.vy*dt;
     const d=dist(s,p);
     if(d<p.magnet){ const a=ang(s,p); const pull=(1-d/p.magnet)*500; s.vx+=Math.cos(a)*pull*dt; s.vy+=Math.sin(a)*pull*dt; }
-    if(d<p.sz+14){ s.collected=true; G.scrap+=s.amt; floatText(s.x,s.y-10,'⬡+'+s.amt+' TIBANNA','#a8ff78'); }
+    if(d<p.sz+14){ s.collected=true; G.scrap+=Math.round(s.amt*(p.tibannaMult||1.0)); pulseGas(); }
   });
   G.scraps=G.scraps.filter(s=>!s.collected&&s.x>-120&&s.x<W+120&&s.y>-120&&s.y<H+120);
 
@@ -3880,39 +3887,20 @@ function update(dt){
     // Track achievement: noDamageWave
     if(currentRun && p.hp===p.maxHp){ currentRun.noDamageWave=true; currentRun.wavesNoDamage=(currentRun.wavesNoDamage||0)+1; }
     else if(currentRun){ currentRun.noDamageWave=false; }
-
+    
     G.waveActive=false; G.waveSpawned=0;
-    // Auto-collect scrap and EMPs
-    G.scraps.forEach(s=>{ var _a=Math.round(s.amt*(G.p.tibannaMult||1.0)); G.scrap += _a; floatText(s.x, s.y-10, '⬡+'+_a, '#a8ff78'); });
-    G.scraps = [];
-    if(G.empPickups){ G.empPickups.forEach(function(){ G.emps++; }); G.empPickups=[]; updateEMPBtn(); }
-    if(G.mines) G.mines=[];
-    if(shopTO) clearTimeout(shopTO);
-
-    // KILLSCREEN: no shop, no pause — spawn next phase immediately
-    if(G.wave >= 50 && G.killscreen){
-      if(typeof startBossMusic==='function') startBossMusic(); // keep boss music going
-      shopTO = setTimeout(function(){
-        if(!G || gState==='over') return;
-        // Brief phase clear flash
-        var hw=document.getElementById('hWave');
-        if(hw){ hw.textContent='☠ PHASE '+G.killscreen.phase+' CLEARED'; hw.style.color='#f0c44a'; }
-        setTimeout(function(){
-          if(!G || gState==='over') return;
-          if(hw){ hw.textContent='☠ KILLSCREEN'; hw.style.color='#ff2244'; }
-          spawnKillscreenPhase();
-          G.countdown=1.2; G.countdownDone=false;
-        }, 1800);
-      }, 200);
-      if(currentRun) currentRun.waveKills=0;
-      return;
-    }
-
-    // Normal wave clear flow
     // If boss wave just cleared, switch back to normal game music
     if(G.wave%5===0 && typeof startGameMusic==='function'){
       setTimeout(function(){ startGameMusic(Math.min(2,(G.wave||1)*0.12+0.9)); },300);
     }
+    // Auto-collect all remaining scrap on the field
+    G.scraps.forEach(s=>{ var _a=Math.round(s.amt*(G.p.tibannaMult||1.0)); G.scrap += _a; });
+    pulseGas();
+    G.scraps = [];
+    // EMP pickups also auto-collected
+    if(G.empPickups){ G.empPickups.forEach(function(){ G.emps++; }); G.empPickups=[]; updateEMPBtn(); }
+    if(G.mines) G.mines=[];
+    if(shopTO) clearTimeout(shopTO);
     // v11: perk draft every 3rd wave before shop
     if(G.wave % 3 === 0){
       shopTO = setTimeout(function(){
@@ -3924,7 +3912,7 @@ function update(dt){
     } else {
       shopTO = setTimeout(function(){ if(G && gState!=='over') openShop(); }, 500);
     }
-
+    
     // Reset wave kill tracker
     if(currentRun) currentRun.waveKills=0;
     // Increment wave
@@ -4309,7 +4297,7 @@ function openPerkDraft(callback){
   }
 
   // Hide game UI, show draft
-  document.getElementById('hud').style.display = 'none';
+  document.getElementById('hud').style.display = 'none'; document.getElementById('hud-bottom').classList.remove('active');
   document.getElementById('touch-ui').style.display = 'none';
   document.querySelectorAll('.screen').forEach(function(s){ s.classList.remove('active'); });
   var overlay = document.getElementById('perk-draft-overlay');
@@ -4367,7 +4355,7 @@ function openShop(){
   if(_rb) _rb.style.opacity = '1';
   // Show overlay — hide canvas HUD, hide all screens, ensure draft overlay is closed
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
-  document.getElementById('hud').style.display='none';
+  document.getElementById('hud').style.display='none'; document.getElementById('hud-bottom').classList.remove('active');
   document.getElementById('touch-ui').style.display='none';
   var _draftOv = document.getElementById('perk-draft-overlay');
   if(_draftOv) _draftOv.style.display='none';
@@ -4381,12 +4369,7 @@ var pendingWpnBuy = null;
 
 function makeShopCard(item, upgrades, stanceSlot){
   var sold = shopSold.has(item.id);
-  // Compute real effective cost — mirrors _wpnCost / buyItem logic so cantAfford and display are always accurate
-  var _displayCost = (shopSold.has(item.id)&&!item.repeatable&&(G.wave||1)>=15)
-    ? Math.round(item.cost*2.5) : item.cost;
-  if(item.cat==='wpn') _displayCost = Math.round(_displayCost * 1.35);
-  if(G && G.p && G.p.shopDiscount && G.p.shopDiscount<1) _displayCost = Math.max(1, Math.round(_displayCost * G.p.shopDiscount));
-  var cantAfford = G.scrap < _displayCost;
+  var cantAfford = G.scrap < item.cost;
   var isUpgrade = item.wpnId && upgrades && upgrades.includes(item.wpnId);
   var upgradeTag = isUpgrade ? '<span class="sc-upgrade">↑ UPGRADE</span>' : '';
   // For capped repeatable items, append remaining count to desc
@@ -4423,7 +4406,7 @@ function makeShopCard(item, upgrades, stanceSlot){
     (pills ? '<div class="sc-stats">' + pills + '</div>' : '') +
     (desc  ? '<div class="sc-desc">'  + desc  + '</div>' : '') +
     '<div class="sc-bottom">' +
-      '<div class="sc-cost">&#x2B21; ' + _displayCost + ' TIBANNA</div>' +
+      '<div class="sc-cost">&#x2B21; ' + item.cost + ' TIBANNA</div>' +
       '<div class="sc-rarity">' + (item.rarity||'common').toUpperCase() + '</div>' +
     '</div>' +
     soldBadge +
@@ -4682,7 +4665,6 @@ function openBugReport(){
   var score = G ? G.score : '—';
   var kills = G ? G.kills : '—';
   var wpn   = G && G.p && G.p.wpn ? G.p.wpn.name : '—';
-  var wpn2  = G && G.p && G.p.wpn2 ? G.p.wpn2.name : 'none';
   var ua    = navigator.userAgent;
   var isMob = /Mobi|Android/i.test(ua) ? 'Mobile' : 'Desktop';
   var browser = (ua.match(/(Firefox|Chrome|Safari|Edge|OPR)\/[\d.]+/)||['Unknown'])[0];
@@ -4690,7 +4672,7 @@ function openBugReport(){
   ctx.innerHTML =
     'WAVE ' + wave + ' &nbsp;|&nbsp; SCORE ' + (typeof score==='number'?score.toLocaleString():score) +
     ' &nbsp;|&nbsp; KILLS ' + kills + '<br>' +
-    'WPN: ' + wpn + ' / ' + wpn2 + '<br>' +
+    'WPN: ' + wpn + '<br>' +
     browser + ' &nbsp;|&nbsp; ' + isMob + ' &nbsp;|&nbsp; ' + GAME_VERSION;
 
   desc.value = '';
@@ -4756,15 +4738,10 @@ function endRunVoluntary(){
     'KILLS: <span style="color:#ff8888">' + G.kills + '</span><br><br>' +
     '<span style="color:rgba(255,255,255,.4);font-size:9px;letter-spacing:1px;">Score will be submitted to the leaderboard.</span>';
   document.getElementById('endrun-confirm').style.display='flex';
-  // Block all shop interactions while confirm is open
-  var shopEl=document.getElementById('shop-overlay');
-  if(shopEl) shopEl.style.pointerEvents='none';
 }
 
 function confirmEndRun(){
   document.getElementById('endrun-confirm').style.display='none';
-  var shopEl=document.getElementById('shop-overlay');
-  if(shopEl) shopEl.style.pointerEvents='';
   if(raf){ cancelAnimationFrame(raf); raf=null; }
   gState='over';
   showGameOver();
@@ -4772,8 +4749,6 @@ function confirmEndRun(){
 
 function cancelEndRun(){
   document.getElementById('endrun-confirm').style.display='none';
-  var shopEl=document.getElementById('shop-overlay');
-  if(shopEl) shopEl.style.pointerEvents='';
 }
 
 function leaveShop(){
@@ -4794,7 +4769,7 @@ function leaveShop(){
   G.countdownDone = false;
   G.countdown = 1.5;
   document.getElementById('shop-overlay').classList.remove('open');
-  document.getElementById('hud').style.display='flex';
+  document.getElementById('hud').style.display='flex'; document.getElementById('hud-bottom').classList.add('active');
   document.getElementById('touch-ui').style.display = isMobile?'block':'none';
 }
 
@@ -5219,25 +5194,21 @@ function updateHUD(){
   document.getElementById('vSh').textContent=Math.ceil(p.sh)+'/'+p.maxSh;
   document.getElementById('bXp').style.width=pct(G.xp/G.xpNext);
   document.getElementById('vLv').textContent='LV'+G.level;
-  // Killscreen HUD override
-  if(G.wave >= 50 && G.killscreen){
-    var _hw = document.getElementById('hWave');
-    if(_hw){ _hw.textContent='☠ PHASE '+G.killscreen.phase; _hw.style.color='#ff2244'; }
-  } else {
-    var _hw2 = document.getElementById('hWave');
-    if(_hw2){ _hw2.textContent='SECTOR '+G.wave; _hw2.style.color=''; }
-  }
-  // v12: wave modifier indicator
-  var hMod=document.getElementById('hModifier');
+  document.getElementById('hWave').textContent='SECTOR '+G.wave;
+  // wave modifier indicator (bottom band)
+  var hMod=document.getElementById('hb-modifier');
   if(hMod){
     if(G.waveModifier){ hMod.textContent=G.waveModifier.icon+' '+G.waveModifier.name; hMod.style.color=G.waveModifier.col; hMod.style.opacity='1'; }
     else{ hMod.style.opacity='0'; }
   }
   document.getElementById('hScore').textContent=G.score.toLocaleString();
-  document.getElementById('hScrap').textContent='⬡ '+G.scrap;
+  // Update gas badge (compact, no floatText)
+  var gasEl=document.getElementById('hb-gas');
+  if(gasEl) gasEl.textContent='⬡ '+G.scrap;
+  // legacy element kept for shop references
+  var hScrapEl=document.getElementById('hScrap');
+  if(hScrapEl) hScrapEl.textContent='⬡ '+G.scrap;
   document.getElementById('hWpn').textContent=G.p.wpn.name;
-  var hw2=document.getElementById('hWpn2');
-  if(hw2){ if(G.p.wpn2){hw2.style.display='';hw2.textContent='+ '+G.p.wpn2.name;}else{hw2.style.display='none';} }
   
   // v11: draft perk icon pips + shop perk multiplier
   var perkEl=document.getElementById('hPerks');
@@ -5815,12 +5786,11 @@ function drawCrosshair(x,y){
 // ═══════════════════════════════════════════════
 function showScreen(id){
   // aliases
-  if(id==='whatsnew') id='whatsnew-v12';
   if(id==='pilot-select') id='pilot-identity'; // legacy redirect
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   if(id) document.getElementById('screen-'+id).classList.add('active');
   const showHud = !id || id==='shop';
-  document.getElementById('hud').style.display = (G && showHud) ? 'flex' : (id?'none':'flex');
+  document.getElementById('hud').style.display = (G && showHud) ? 'flex' : (id?'none':'flex'); document.getElementById('hud-bottom').classList.toggle('active', !!(G && showHud));
   document.getElementById('touch-ui').style.display = isMobile && (!id||id==='playing') ? 'block' : 'none';
   if(gState==='playing') document.getElementById('touch-ui').style.display = isMobile?'block':'none';
   // Reset scroll position for scrollable screens
